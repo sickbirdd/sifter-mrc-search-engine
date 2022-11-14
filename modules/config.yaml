@@ -1,0 +1,4 @@
+developments:
+  epochs: 150
+  batch_size: 128
+  lr_initial: 0.1
