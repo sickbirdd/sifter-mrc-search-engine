@@ -15,7 +15,6 @@ class Integration:
         path = Path(path)
         with open(path, 'rb') as f:
             in_dict = json.load(f)
-        
         contexts = []
         questions = []
         answers = []
