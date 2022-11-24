@@ -170,5 +170,5 @@ ex_pkg_calc.egg-info/
 # End of https://www.toptal.com/developers/gitignore/api/python
 
 # datasets 폴더의 모든 dataset은 git과 연동하지 않는다.
-datasets/lm_post_training/training/*
-datasets/lm_post_training/validation/*
+datasets/lm_post_training/training/*.json
+datasets/lm_post_training/validation/*.json
