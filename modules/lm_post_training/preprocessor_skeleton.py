@@ -73,8 +73,43 @@ class PostTrainingPreprocessing:
     # 불러온 데이터 정제에 사용되는 함수들
     # 함수명 변경 가능
     def removeSpecialCharacters(self):
-        # 데이터를 정제할 수 있는 함수
-        pass
+        # 문장 시작과 끝 공백 제거
+        def stripSentence(sentence):
+            return sentence.strip()
+        # HTML 태그 제거
+        def subTag(sentence):
+            return re.sub('<[^>]*>', '', sentence)
+        # 이메일 주소 제거
+        def subEmail(sentence):
+            return re.sub('([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)', '', sentence)
+        # URL 제거
+        def subURL(sentence):
+            return re.sub('(http|ftp|https)://(?:[-\w.]|(?:%[\da-fA-F]{2}))+', '', sentence)
+        # 괄호 및 괄호 안 문자 제거
+        def subBracket(sentence):
+            return re.sub(r'\([^)]*\)', '', sentence)
+        # 자음 모음 제거
+        def subConVow(sentence):
+            return re.sub('([ㄱ-ㅎㅏ-ㅣ]+)', '', sentence)
+        # 공백 여러 개 하나로 치환
+        def subBlank(sentence):
+            return ' '.join(sentence.split())
+        # 세 번 이상 반복되는 문자 두 개로 치환
+        def subRepeatChar(sentence):
+            p = re.compile('(([a-zA-Z0-9가-힣])\\2{2,})')
+            result = p.findall(sentence)
+            for r, _ in result:
+                sentence = sentence.replace(r, r[:2])
+            return sentence
+        # 특수문자 제거
+        def subNoise(sentence):
+            sentence = re.sub(r"[^\uAC00-\uD7A30-9a-zA-Z\s]", '', sentence)
+            return sentence
+        # 전체 함수 적용
+        cleanMethods = [stripSentence, subTag, subEmail, subURL, subBracket, subConVow, subBlank, subRepeatChar, subNoise]
+        for method in cleanMethods:
+            sentence = method(sentence)
+        return sentence
     def nextSentencePrediction(self):
         # 사전 학습을 통해 Bert 성능을 향상시키기 위한 다음 문장 예측 기능을 수행하는 모듈을 개발한다.
         pass
