@@ -54,7 +54,34 @@ class preProcessorTest(TestCase):
         
     def test_next_sentence_prediction(self):
         print("get token data testing......")
-        #TODO
+        #NSPmodule 기본값
+        self.implPreProcessor.nspMode.prob = 0.5
+        self.assertEqual(self.implPreProcessor.nspMode.prob, 0.5)
+        self.assertEqual(self.implPreProcessor.nspMode.setStrategy("NoStrategy"))
+
+
+        testSize = 1000
+        nspResult = self.implPreProcessor.nextSentencePrediction(testSize)
+
+        # 원하는 문장의 개수만큼 해당 문서쌍을 생성해야 합니다.
+        self.assertEqual(testSize, len(nspResult))
+        
+        # 각 데이터는 문서쌍 데이터와 해당 문제의 정답값을 가지고 있어야 합니다.
+        self.assertTrue("data" in nspResult[0])
+        self.assertTrue("label" in nspResult[0])
+
+        #확률 테스트(기본값 50%)
+        nextPredict = 0
+        negPredict = 0
+        for nspComponent in nspResult:
+            if nspComponent.get('label'):
+                nextPredict = nextPredict + 1
+            else:
+                negPredict = negPredict + 1
+        self.assertEqual(nextPredict + negPredict, testSize)
+        self.assertTrue(negPredict < testSize / 10)
+
+
         
 if __name__ == '__main__':
     main()
