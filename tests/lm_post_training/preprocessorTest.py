@@ -20,26 +20,10 @@ class preProcessorTest(TestCase):
         self.dataPath = conf["dataset"]["post_training"]["test"]["path"]
         self.dataDom = conf["dataset"]["post_training"]["test"]["struct"].split('/')
         
-    # 클래스 소멸시 한번만 실행
-    @classmethod
-    def tearDownClass(self):
-        print("tearDownClass")
-    
-    # 각 테스트 함수 실행 시 
-    def setUp(self):
-        print('setUp')
-    
-    def tearDown(self):
-        print('tearDown')
-        
-    def test_readData(self):
         print("1:---최초 생성 테스트---")
-        
         assert self.implPreProcessor.getSize() == 0
         assert self.implPreProcessor.getRawData() == []
-        
         print("1:---최초 생성 테스트 완료---")
-
         print("2:---샘플 데이터 입력 테스트---")
         
         self.implPreProcessor.readData(dataPath=self.dataPath, dataDOM=self.dataDom)
@@ -52,8 +36,25 @@ class preProcessorTest(TestCase):
         
         print("2:---샘플 데이터 입력 테스트 완료---")
         
+    # 클래스 소멸시 한번만 실행
+    @classmethod
+    def tearDownClass(self):
+        print("tearDownClass")
+    
+    # 각 테스트 함수 실행 시 
+    def setUp(self):
+        print('setUp')
+    
+    def tearDown(self):
+        print('tearDown')
+        
     def test_remove_special_characters(self):
         print("remove special character testing......")
+        test_dataset = [" test ", "<html>test</html>", "abcdef123456@naver.com test", "!t@e#$s%t^&*()", "😀😃😄t😁e😆😅s😂t", "tㅔeㅔsㅅtㅌ", "전전전전긍긍긍긍", "t   e   s   t"]
+        test_answer = ["test", "test", "test", "test", "test", "test", "전전긍긍", "t e s t"]
+        clean_dataset = list(map(self.implPreProcessor.removeSpecialCharacters, test_dataset))
+        self.assertEqual(clean_dataset, test_answer)
+        print("Done!")
         #TODO
         
     def test_masking(self):
