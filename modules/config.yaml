@@ -3,12 +3,18 @@ developments:
   batch_size: 128
   lr_initial: 0.1
 model:
-  name: bert-base-multilingual-cased
+  name: klue/bert-base
 dataset:
   post_training:
     training:
       name: empty
-      path: datasets/lm_post_training/training/TL_span_extraction.json
+      path: datasets/lm_post_training/training/LabeledData
+      struct: named_entity/#/content/#/sentence
     validation:
       name: empty
-      path: datasets/lm_post_training/validation/VL_span_extraction.json
+      path: datasets/lm_post_training/validation/LabeledData
+      struct : named_entity/#/content/#/sentence
+    test:
+      name: empty
+      path: datasets/lm_post_training/test/LabeledData
+      struct: named_entity/#/content/#/sentence
