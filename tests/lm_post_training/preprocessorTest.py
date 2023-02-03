@@ -62,7 +62,7 @@ class preProcessorTest(TestCase):
         #TODO
     
     def test_tokenize(self):
-        print("tokenize testing......")
+        print("tokenize testing......testtest")
         #TODO
         
     def test_masked_language_model(self):
