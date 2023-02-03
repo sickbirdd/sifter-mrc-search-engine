@@ -61,7 +61,7 @@ class NSPUsed:
     
     def isUsed(self, index, stnIndex, index_s = "", stnIndex_s = ""):
         if self.vectorType == "Dict":
-            return index in self.__list and (stnIndex in self.__list[index] or "*" in self._list[index])
+            return index in self.__list and (stnIndex in self.__list[index] or "*" in self.__list[index])
         elif self.vectorType == "Set":
             return [index, stnIndex, index_s, stnIndex_s] in self.__list
 
@@ -169,19 +169,29 @@ class PostTrainingPreprocessing:
     # 무작위 문장을 반환한다.
     # param exceptionIndex: 선택 제외목록
     # param permitFInal: 각 원문중 마지막 문장 선택 여부
-    def __getRandomSentence(self, exceptIndex, permitFinal = True):
+    def __getRandomSentence(self, exceptIndex, permitFinal = True, size = 1):
         cnt = 0
         while cnt < 1000:
             cnt = cnt + 1
 
             try:
                 index = random.randrange(0, self.__size)
-                stnIndex = random.randrange(0, len(self.__data[index]) - 0 if permitFinal else 1)
+                stnIndex = random.randrange(0, len(self.__data[index]) - size if permitFinal else size + 1)
+                if stnIndex < 0:
+                    continue
             except:
                 raise Exception("분류 데이터가 형식에 맞게 정제되어 있지 않습니다.")
             
-            if not exceptIndex.isUsed(index, stnIndex):
-                return index, stnIndex
+            checkUsed = False
+            for s in range(size):
+                if exceptIndex.isUsed(index, stnIndex):
+                    checkUsed = True
+                    break
+
+            if checkUsed:
+                continue
+            
+            return index, stnIndex
     
         raise Exception("랜덤 문장 생성 실패: 시도 초과")
 
@@ -199,19 +209,16 @@ class PostTrainingPreprocessing:
                 print("문장 생성 실패: 원하는 크기의 문장을 추출하는데 실패하였습니다. Size = " + str(resultSize))
                 break
             try:
-                # 첫번쨰 문장: 무작위로 추가
-                index_f, stnIndex_f = self.__getRandomSentence(usedIndex, False)
-
+                # 첫번째 문장: 무작위로 추가
                 # 2번째 문장: 확률적으로 긍정 문장(원문 다음 문장), 부정 문장 추가(다른 기사의 무작위 문장)
                 rand = random.random()
                 if rand < self.nspMode.prob:
-                    if usedIndex.isUsed(index_f, stnIndex_f + 1):
-                        raise Exception("이미 사용한 문장입니다.")
-                        
+                    index_f, stnIndex_f = self.__getRandomSentence(usedIndex, False, 2)
                     index_s = index_f
                     stnIndex_s = stnIndex_f + 1
                     label = True
                 else:
+                    index_f, stnIndex_f = self.__getRandomSentence(usedIndex)
                     usedIndex.addList(index_f, "*")
                     index_s, stnIndex_s = self.__getRandomSentence(usedIndex)
                     usedIndex.removeList(index_f, "*")
@@ -235,7 +242,8 @@ class PostTrainingPreprocessing:
                     
             except:
                 count = count + 1
-                print("문장 생성 실패: 시도: " + str(count))
+        
+        print("주 함수 총 시도: " + str(count))
         return result
 
     def maskedLanguageModel(self):
