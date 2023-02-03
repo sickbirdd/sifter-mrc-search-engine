@@ -90,21 +90,6 @@ class PostTrainingPreprocessing:
     def getRawData(self):
         return self.__data
 
-    #분류된 연관 문장을 SEP token과 함께 합쳐 반환한다.
-    def getTokenData(self):
-        tokenData = list()
-        for paragraph in self.__data:
-            para = ''
-            if type(paragraph) == list:
-                for context in paragraph:
-                    if para != '':
-                        para = para + ' ' + self.tokenizer.sep_token + ' '
-                    para += context
-                tokenData.append(para)
-            else:
-                tokenData.append(paragraph)
-        return tokenData
-
     def getSize(self):
         return self.__size
     
@@ -138,7 +123,7 @@ class PostTrainingPreprocessing:
         
     # 불러온 데이터 정제에 사용되는 함수들
     # 함수명 변경 가능
-    def removeSpecialCharacters(self):
+    def removeSpecialCharacters(self, sentence):
         # 문장 시작과 끝 공백 제거
         def stripSentence(sentence):
             return sentence.strip()
@@ -250,12 +235,67 @@ class PostTrainingPreprocessing:
     def maskedLanguageModel(self):
         # 토크나이징 한 기사 본문을 특정 비율만큼 토크나이징.
         pass 
+    
+    def tokenize(self, paragraph):
 
-# dataDOM = ['SJML', 'text', '#', 'content']
-# labelDOM = ['named_entity', '#', 'content', '#', 'sentence']
-# labelPath = "datasets/lm_post_training/training/LabeledData"
+        data_tokenizing = []
+        
+        for data in paragraph:
+            result = self.tokenizer.encode_plus(data, add_special_tokens=True, truncation=True, padding="max_length")
+            data_tokenizing.append(result)
+            # print(result)
 
-# test = PostTrainingPreprocessing('klue/bert-base')
-# datas = test.readData(dataPath = labelPath, dataDOM = labelDOM)
+        # print(data_tokenizing[99])
 
-# print("done")
+        return data_tokenizing
+
+    def masking(self, data_tokenizing, ratio=0.15):
+        clsToken=self.tokenizer.cls_token_id
+        sepToken=self.tokenizer.sep_token_id,
+        maskToken=self.tokenizer.mask_token_id,
+        padToken=self.tokenizer.pad_token_id
+        if type(maskToken) is tuple:
+            print("tuuuuuuple")
+            maskToken = maskToken[0]
+
+        # 마스킹 전 label 키에 id 복사
+        for data in data_tokenizing:
+            data["label"] = copy.deepcopy(data["input_ids"])
+            # print(data)
+
+        data_masking = []
+
+        for data in data_tokenizing:
+            # print(data["input_ids"])
+            # 마스킹 전 label 키에 id 복사
+            # data["label"] = data["input_ids"]
+            # 마스킹 . 기사 하나씩
+            rand = torch.rand(len(data["input_ids"]))
+            # 15%확률로 마스킹, 특수토큰은 항상 false
+            mask_arr = (rand < ratio)
+            for i in range(len(data["input_ids"])):
+                if data["input_ids"][i] in [clsToken, sepToken, maskToken, padToken]:
+                    mask_arr[i] = False
+            
+            for i in range(len(data["input_ids"])):
+                token = data["input_ids"][i]
+                mask = mask_arr[i]
+                if mask == True:
+                    # print("MASK!")
+                    mask_ratio = torch.rand(1)
+                    # 15%의 마스킹 될 토큰 중 10%는 다른 토큰으로 대체
+                    if mask_ratio <= 0.1:
+                        data["input_ids"][i] = int(torch.randint(low=10, high=51200, size=(1,)))
+                        print("10%")
+                    # 10%는 선택됐지만 그대로 두기    
+                    elif mask_ratio <= 0.2:
+                        data["input_ids"][i] = token
+                        print("20%")
+                    # 나머지는 마스크 토큰으로 변경
+                    else:
+                        # print("MASK!")
+                        data["input_ids"][i] = maskToken
+                        # print(data["input_ids"][i])
+            data_masking.append(data)
+        # print(re[0])
+        return data_masking
