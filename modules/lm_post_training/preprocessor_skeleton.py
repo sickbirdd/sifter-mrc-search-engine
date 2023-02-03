@@ -1,20 +1,86 @@
 #Temp
 import os
 import re
-import sys
-import yaml
 import json
-import torch
+import random
 from pathlib import Path
 from transformers import AutoTokenizer
 
+#NSP 관련 옵션 값을 가진 객체
+class NSPmode:
+    def __mockMasked(sentence):
+        # mask 함수완성되면 대체
+        return "[MASK] - this is base mask function: ERROR"
+
+    def __init__(self) -> None:
+        self.__activeMaskFunction = False
+        self.__maskFunction = self.__mockMasked
+        # self.maxDirectRange = 1
+        self.prob = 0.5
+        #NoDupplicate: 모든 결과에서 유일한 문장 사용
+        #OnlyFirst: 첫번째 문장만 유일한 문장 사용
+        #TODO Soft: 유일한 문장쌍 사용
+        self.__strageList = set(["NoDupplicate", "OnlyFirst"])
+        self.__strategy = "NoDupplicate"
+
+    def masking(self, sentence):
+        return self.__maskFunction(sentence) if self.__activeMaskFunction else sentence
+
+    def activeMasking(self, maskFunction):
+        self.__activeMaskFunction = True
+        self.__maskFunction = maskFunction
+
+    def cancelMasking(self):
+        self.__activeMaskFunction = False
+        self.__maskFunction = self.__mockMasked
+
+    def getStrategyList(self):
+        return self.__strageList
+
+    def getStrategy(self):
+        return self.__strategy
+
+    def setStrategy(self, strategy):
+        if strategy in self.__strageList:
+            self.__strategy = strategy
+            return True
+        else:
+            return False
+
+# NSP 관련 문장 정제 데이터를 저장하는 객체
+class NSPUsed:
+    def __init__(self, vectorType = "Dict") -> None:
+        self.__vectorMode = ["Dict", "Set"]
+        if not vectorType in self.__vectorMode:
+            raise Exception("허용되지 않은 vectorType입니다. : ['Dict', 'Set']")
+
+        self.vectorType = vectorType
+        self.__list = dict()
+        self.selectList = set()
+    
+    def isUsed(self, index, stnIndex, index_s = "", stnIndex_s = ""):
+        if self.vectorType == "Dict":
+            return index in self.__list and (stnIndex in self.__list[index] or "*" in self._list[index])
+        elif self.vectorType == "Set":
+            return [index, stnIndex, index_s, stnIndex_s] in self.selectList
+
+    def addList(self, index, stnIndex):
+        if not index in self.__list:
+            self.__list[index] = set()
+        self.__list[index].add(stnIndex)
+    
+    def removeList(self, index, stnIndex):
+        if index in self.__list and stnIndex in self.__list[index]:
+            self.__list[index].remove(stnIndex)
+
+# 전처리 처리 객체
 class PostTrainingPreprocessing:
     
     def __init__(self, modelName) -> None:
-        self.modelName = modelName
         self.tokenizer = AutoTokenizer.from_pretrained(modelName)
         self.__data = []
         self.__size = 0
+        self.nspMode = NSPmode()
     
     #데이터만 모두 초기화한다.
     def clear(self):
@@ -25,14 +91,14 @@ class PostTrainingPreprocessing:
         return self.__data
 
     #분류된 연관 문장을 SEP token과 함께 합쳐 반환한다.
-    def getTokenData(self, sepToken = '[SEP]'):
+    def getTokenData(self):
         tokenData = list()
         for paragraph in self.__data:
             para = ''
             if type(paragraph) == list:
                 for context in paragraph:
                     if para != '':
-                        para = para + ' ' + sepToken + ' '
+                        para = para + ' ' + self.tokenizer.sep_token + ' '
                     para += context
                 tokenData.append(para)
             else:
@@ -67,7 +133,7 @@ class PostTrainingPreprocessing:
                     with open(file_path, 'rb') as f:
                         in_dict = json.load(f)
                     contextList = self.__contextFinder(in_dict, dataDOM)
-                    self.__data.append(contextList)
+                    self.__data.extend(contextList)
                     self.__size = self.__size + len(contextList)
         
     # 불러온 데이터 정제에 사용되는 함수들
@@ -110,9 +176,77 @@ class PostTrainingPreprocessing:
         for method in cleanMethods:
             sentence = method(sentence)
         return sentence
-    def nextSentencePrediction(self):
-        # 사전 학습을 통해 Bert 성능을 향상시키기 위한 다음 문장 예측 기능을 수행하는 모듈을 개발한다.
-        pass
+    
+    # 무작위 문장을 반환한다.
+    # param exceptionIndex: 선택 제외목록
+    # param permitFInal: 각 원문중 마지막 문장 선택 여부
+    def __getRandomSentence(self, exceptIndex, permitFinal = True):
+        cnt = 0
+        while cnt < 1000:
+            cnt = cnt + 1
+
+            try:
+                index = random.randrange(0, self.__size)
+                stnIndex = random.randrange(0, len(self.__data[index]) - 0 if permitFinal else 1)
+            except:
+                raise Exception("분류 데이터가 형식에 맞게 정제되어 있지 않습니다.")
+            
+            if not exceptIndex.isUsed(index, stnIndex):
+                return index, stnIndex
+    
+        raise Exception("랜덤 문장 생성 실패: 시도 초과")
+
+    # 사전 학습을 통해 Bert 성능을 향상시키기 위한 다음 문장 예측 기능을 수행하는 모듈
+    # param size: 문장 크기
+    # sepToken: 문장 구분 크기
+    def nextSentencePrediction(self, size):
+        result = []
+        resultSize = 0
+        usedIndex = NSPUsed("Set" if self.nspMode.getStrategy() == "Soft" else "Dict")
+        count = 0
+        while resultSize < size:
+            if count == 1000:
+                print("문장 생성 실패: 원하는 크기의 문장을 추출하는데 실패하였습니다. Size = " + str(resultSize))
+                break
+            try:
+                # 첫번쨰 문장: 무작위로 추가
+                index_f, stnIndex_f = self.__getRandomSentence(usedIndex, False)
+
+                # 2번째 문장: 확률적으로 긍정 문장(원문 다음 문장), 부정 문장 추가(다른 기사의 무작위 문장)
+                rand = random.random()
+                if rand < self.nspMode.prob:
+                    if usedIndex.isUsed(index_f, stnIndex_f + 1):
+                        raise Exception("이미 사용한 문장입니다.")
+                        
+                    index_s = index_f
+                    stnIndex_s = stnIndex_f + 1
+                    label = True
+                else:
+                    usedIndex.addList(index_f, "*")
+                    index_s, stnIndex_s = self.__getRandomSentence(usedIndex)
+                    usedIndex.removeList(index_f, "*")
+                    label = False
+                
+                step = dict()
+                sentence_f = self.nspMode.masking(self.__data[index_f][stnIndex_f]) 
+                sentence_s = self.nspMode.masking(self.__data[index_s][stnIndex_s])
+                step['data'] = sentence_f + ' ' + self.tokenizer.sep_token + ' ' + sentence_s
+                step['label'] = label
+                result.append(step)
+                resultSize = resultSize + 1
+                if self.nspMode.getStrategy() == "NoDupplicate":
+                    usedIndex.addList(index_f, stnIndex_f)
+                    usedIndex.addList(index_s, stnIndex_s)
+                elif self.nspMode.getStrategy() == "OnlyFirst":
+                    usedIndex.addList(index_f, stnIndex_f)
+                elif self.nspMode.getStrategy() == "Soft":
+                    usedIndex.selectList.add([index_f, stnIndex_f, index_s, stnIndex_s])
+                    
+            except:
+                count = count + 1
+                print("문장 생성 실패: 시도: " + str(count))
+        return result
+
     def maskedLanguageModel(self):
         # 토크나이징 한 기사 본문을 특정 비율만큼 토크나이징.
         pass 
