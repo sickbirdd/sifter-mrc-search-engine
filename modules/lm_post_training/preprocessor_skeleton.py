@@ -10,13 +10,7 @@ from transformers import AutoTokenizer
 
 #NSP 관련 옵션 값을 가진 객체
 class NSPmode:
-    def __mockMasked(sentence):
-        # mask 함수완성되면 대체
-        return "[MASK] - this is base mask function: ERROR"
-
     def __init__(self) -> None:
-        self.__activeMaskFunction = False
-        self.__maskFunction = self.__mockMasked
         # self.maxDirectRange = 1
         self.prob = 0.5
         #NoDupplicate: 모든 결과에서 유일한 문장 사용
@@ -24,17 +18,6 @@ class NSPmode:
         #TODO Soft: 유일한 문장쌍 사용
         self.__strageList = set(["NoDupplicate", "OnlyFirst", "Soft"])
         self.__strategy = "NoDupplicate"
-
-    def masking(self, sentence):
-        return self.__maskFunction(sentence) if self.__activeMaskFunction else sentence
-
-    def activeMasking(self, maskFunction):
-        self.__activeMaskFunction = True
-        self.__maskFunction = maskFunction
-
-    def cancelMasking(self):
-        self.__activeMaskFunction = False
-        self.__maskFunction = self.__mockMasked
 
     def getStrategyList(self):
         return self.__strageList
@@ -183,7 +166,7 @@ class PostTrainingPreprocessing:
                 raise Exception("분류 데이터가 형식에 맞게 정제되어 있지 않습니다.")
             
             checkUsed = False
-            for s in range(size):
+            for _ in range(size):
                 if exceptIndex.isUsed(index, stnIndex):
                     checkUsed = True
                     break
@@ -198,7 +181,6 @@ class PostTrainingPreprocessing:
     # 사전 학습을 통해 Bert 성능을 향상시키기 위한 다음 문장 예측 기능을 수행하는 모듈
     # param size: 문장 크기
     # sepToken: 문장 구분 크기
-    # TODO: 구조 개선 -> 문장 추출을 동시에 진행 
     def nextSentencePrediction(self, size):
         result = []
         resultSize = 0
@@ -225,8 +207,8 @@ class PostTrainingPreprocessing:
                     label = False
                 
                 step = dict()
-                sentence_f = self.nspMode.masking(self.__data[index_f][stnIndex_f]) 
-                sentence_s = self.nspMode.masking(self.__data[index_s][stnIndex_s])
+                sentence_f = self.__data[index_f][stnIndex_f]
+                sentence_s = self.__data[index_s][stnIndex_s]
                 step['first'] = sentence_f
                 step['second'] = sentence_s
                 step['label'] = label

@@ -142,9 +142,6 @@ class preProcessorTest(TestCase):
         
         # self.assertEqual(testSize, len(nspResult))
 
-        #마스킹 모듈 활성화 테스트
-        #TODO : may be deprecated(모듈 분리 예정)
-
 
         
 if __name__ == '__main__':
