@@ -3,6 +3,8 @@ import os
 import re
 import json
 import random
+import torch
+import copy
 from pathlib import Path
 from transformers import AutoTokenizer
 
@@ -20,7 +22,7 @@ class NSPmode:
         #NoDupplicate: 모든 결과에서 유일한 문장 사용
         #OnlyFirst: 첫번째 문장만 유일한 문장 사용
         #TODO Soft: 유일한 문장쌍 사용
-        self.__strageList = set(["NoDupplicate", "OnlyFirst"])
+        self.__strageList = set(["NoDupplicate", "OnlyFirst", "Soft"])
         self.__strategy = "NoDupplicate"
 
     def masking(self, sentence):
@@ -55,19 +57,21 @@ class NSPUsed:
             raise Exception("허용되지 않은 vectorType입니다. : ['Dict', 'Set']")
 
         self.vectorType = vectorType
-        self.__list = dict()
-        self.selectList = set()
+        self.__list = dict() if vectorType == "Dict" else set()
     
     def isUsed(self, index, stnIndex, index_s = "", stnIndex_s = ""):
         if self.vectorType == "Dict":
             return index in self.__list and (stnIndex in self.__list[index] or "*" in self._list[index])
         elif self.vectorType == "Set":
-            return [index, stnIndex, index_s, stnIndex_s] in self.selectList
+            return [index, stnIndex, index_s, stnIndex_s] in self.__list
 
     def addList(self, index, stnIndex):
         if not index in self.__list:
             self.__list[index] = set()
         self.__list[index].add(stnIndex)
+
+    def addSet(self, index_f, stnIndex_f, index_s, stnIndex_s):
+        self.__list.add([index_f, stnIndex_f, index_s, stnIndex_s])
     
     def removeList(self, index, stnIndex):
         if index in self.__list and stnIndex in self.__list[index]:
@@ -184,6 +188,7 @@ class PostTrainingPreprocessing:
     # 사전 학습을 통해 Bert 성능을 향상시키기 위한 다음 문장 예측 기능을 수행하는 모듈
     # param size: 문장 크기
     # sepToken: 문장 구분 크기
+    # TODO: 구조 개선 -> 문장 추출을 동시에 진행 
     def nextSentencePrediction(self, size):
         result = []
         resultSize = 0
@@ -215,7 +220,8 @@ class PostTrainingPreprocessing:
                 step = dict()
                 sentence_f = self.nspMode.masking(self.__data[index_f][stnIndex_f]) 
                 sentence_s = self.nspMode.masking(self.__data[index_s][stnIndex_s])
-                step['data'] = sentence_f + ' ' + self.tokenizer.sep_token + ' ' + sentence_s
+                step['first'] = sentence_f
+                step['second'] = sentence_s
                 step['label'] = label
                 result.append(step)
                 resultSize = resultSize + 1
@@ -225,7 +231,7 @@ class PostTrainingPreprocessing:
                 elif self.nspMode.getStrategy() == "OnlyFirst":
                     usedIndex.addList(index_f, stnIndex_f)
                 elif self.nspMode.getStrategy() == "Soft":
-                    usedIndex.selectList.add([index_f, stnIndex_f, index_s, stnIndex_s])
+                    usedIndex.addSet(index_f, stnIndex_f, index_s, stnIndex_s)
                     
             except:
                 count = count + 1
