@@ -136,9 +136,9 @@ class PostTrainingPreprocessing:
         # URL 제거
         def subURL(sentence):
             return re.sub('(http|ftp|https)://(?:[-\w.]|(?:%[\da-fA-F]{2}))+', '', sentence)
-        # 괄호 및 괄호 안 문자 제거
+        # 꺽쇠 및 꺽쇠 안 문자 제거
         def subBracket(sentence):
-            return re.sub(r'\([^)]*\)', '', sentence)
+            return re.sub(r'\<[^>]*\>', '', sentence)
         # 자음 모음 제거
         def subConVow(sentence):
             return re.sub('([ㄱ-ㅎㅏ-ㅣ]+)', '', sentence)
