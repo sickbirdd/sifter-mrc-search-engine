@@ -187,7 +187,7 @@ class PostTrainingPreprocessing:
         usedIndex = NSPUsed("Set" if self.nspMode.getStrategy() == "Soft" else "Dict")
         count = 0
         while resultSize < size:
-            if count == 1000:
+            if count == 100000:
                 print("문장 생성 실패: 원하는 크기의 문장을 추출하는데 실패하였습니다. Size = " + str(resultSize))
                 break
             try:
