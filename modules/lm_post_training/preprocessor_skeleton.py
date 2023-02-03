@@ -90,21 +90,6 @@ class PostTrainingPreprocessing:
     def getRawData(self):
         return self.__data
 
-    #분류된 연관 문장을 SEP token과 함께 합쳐 반환한다.
-    def getTokenData(self):
-        tokenData = list()
-        for paragraph in self.__data:
-            para = ''
-            if type(paragraph) == list:
-                for context in paragraph:
-                    if para != '':
-                        para = para + ' ' + self.tokenizer.sep_token + ' '
-                    para += context
-                tokenData.append(para)
-            else:
-                tokenData.append(paragraph)
-        return tokenData
-
     def getSize(self):
         return self.__size
     
@@ -138,7 +123,7 @@ class PostTrainingPreprocessing:
         
     # 불러온 데이터 정제에 사용되는 함수들
     # 함수명 변경 가능
-    def removeSpecialCharacters(self):
+    def removeSpecialCharacters(self, sentence):
         # 문장 시작과 끝 공백 제거
         def stripSentence(sentence):
             return sentence.strip()
@@ -314,12 +299,3 @@ class PostTrainingPreprocessing:
             data_masking.append(data)
         # print(re[0])
         return data_masking
-
-# dataDOM = ['SJML', 'text', '#', 'content']
-# labelDOM = ['named_entity', '#', 'content', '#', 'sentence']
-# labelPath = "datasets/lm_post_training/training/LabeledData"
-
-# test = PostTrainingPreprocessing('klue/bert-base')
-# datas = test.readData(dataPath = labelPath, dataDOM = labelDOM)
-
-# print("done")
