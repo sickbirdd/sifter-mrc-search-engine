@@ -3,36 +3,21 @@ import os
 import re
 import json
 import random
+import torch
+import copy
 from pathlib import Path
 from transformers import AutoTokenizer
 
 #NSP 관련 옵션 값을 가진 객체
 class NSPmode:
-    def __mockMasked(sentence):
-        # mask 함수완성되면 대체
-        return "[MASK] - this is base mask function: ERROR"
-
     def __init__(self) -> None:
-        self.__activeMaskFunction = False
-        self.__maskFunction = self.__mockMasked
         # self.maxDirectRange = 1
         self.prob = 0.5
         #NoDupplicate: 모든 결과에서 유일한 문장 사용
         #OnlyFirst: 첫번째 문장만 유일한 문장 사용
         #TODO Soft: 유일한 문장쌍 사용
-        self.__strageList = set(["NoDupplicate", "OnlyFirst"])
+        self.__strageList = set(["NoDupplicate", "OnlyFirst", "Soft"])
         self.__strategy = "NoDupplicate"
-
-    def masking(self, sentence):
-        return self.__maskFunction(sentence) if self.__activeMaskFunction else sentence
-
-    def activeMasking(self, maskFunction):
-        self.__activeMaskFunction = True
-        self.__maskFunction = maskFunction
-
-    def cancelMasking(self):
-        self.__activeMaskFunction = False
-        self.__maskFunction = self.__mockMasked
 
     def getStrategyList(self):
         return self.__strageList
@@ -55,19 +40,21 @@ class NSPUsed:
             raise Exception("허용되지 않은 vectorType입니다. : ['Dict', 'Set']")
 
         self.vectorType = vectorType
-        self.__list = dict()
-        self.selectList = set()
+        self.__list = dict() if vectorType == "Dict" else set()
     
     def isUsed(self, index, stnIndex, index_s = "", stnIndex_s = ""):
         if self.vectorType == "Dict":
-            return index in self.__list and (stnIndex in self.__list[index] or "*" in self._list[index])
+            return index in self.__list and (stnIndex in self.__list[index] or "*" in self.__list[index])
         elif self.vectorType == "Set":
-            return [index, stnIndex, index_s, stnIndex_s] in self.selectList
+            return [index, stnIndex, index_s, stnIndex_s] in self.__list
 
     def addList(self, index, stnIndex):
         if not index in self.__list:
             self.__list[index] = set()
         self.__list[index].add(stnIndex)
+
+    def addSet(self, index_f, stnIndex_f, index_s, stnIndex_s):
+        self.__list.add([index_f, stnIndex_f, index_s, stnIndex_s])
     
     def removeList(self, index, stnIndex):
         if index in self.__list and stnIndex in self.__list[index]:
@@ -165,19 +152,29 @@ class PostTrainingPreprocessing:
     # 무작위 문장을 반환한다.
     # param exceptionIndex: 선택 제외목록
     # param permitFInal: 각 원문중 마지막 문장 선택 여부
-    def __getRandomSentence(self, exceptIndex, permitFinal = True):
+    def __getRandomSentence(self, exceptIndex, permitFinal = True, size = 1):
         cnt = 0
         while cnt < 1000:
             cnt = cnt + 1
 
             try:
                 index = random.randrange(0, self.__size)
-                stnIndex = random.randrange(0, len(self.__data[index]) - 0 if permitFinal else 1)
+                stnIndex = random.randrange(0, len(self.__data[index]) - size if permitFinal else size + 1)
+                if stnIndex < 0:
+                    continue
             except:
                 raise Exception("분류 데이터가 형식에 맞게 정제되어 있지 않습니다.")
             
-            if not exceptIndex.isUsed(index, stnIndex):
-                return index, stnIndex
+            checkUsed = False
+            for _ in range(size):
+                if exceptIndex.isUsed(index, stnIndex):
+                    checkUsed = True
+                    break
+
+            if checkUsed:
+                continue
+            
+            return index, stnIndex
     
         raise Exception("랜덤 문장 생성 실패: 시도 초과")
 
@@ -194,28 +191,26 @@ class PostTrainingPreprocessing:
                 print("문장 생성 실패: 원하는 크기의 문장을 추출하는데 실패하였습니다. Size = " + str(resultSize))
                 break
             try:
-                # 첫번쨰 문장: 무작위로 추가
-                index_f, stnIndex_f = self.__getRandomSentence(usedIndex, False)
-
+                # 첫번째 문장: 무작위로 추가
                 # 2번째 문장: 확률적으로 긍정 문장(원문 다음 문장), 부정 문장 추가(다른 기사의 무작위 문장)
                 rand = random.random()
                 if rand < self.nspMode.prob:
-                    if usedIndex.isUsed(index_f, stnIndex_f + 1):
-                        raise Exception("이미 사용한 문장입니다.")
-                        
+                    index_f, stnIndex_f = self.__getRandomSentence(usedIndex, False, 2)
                     index_s = index_f
                     stnIndex_s = stnIndex_f + 1
                     label = True
                 else:
+                    index_f, stnIndex_f = self.__getRandomSentence(usedIndex)
                     usedIndex.addList(index_f, "*")
                     index_s, stnIndex_s = self.__getRandomSentence(usedIndex)
                     usedIndex.removeList(index_f, "*")
                     label = False
                 
                 step = dict()
-                sentence_f = self.nspMode.masking(self.__data[index_f][stnIndex_f]) 
-                sentence_s = self.nspMode.masking(self.__data[index_s][stnIndex_s])
-                step['data'] = sentence_f + ' ' + self.tokenizer.sep_token + ' ' + sentence_s
+                sentence_f = self.__data[index_f][stnIndex_f]
+                sentence_s = self.__data[index_s][stnIndex_s]
+                step['first'] = sentence_f
+                step['second'] = sentence_s
                 step['label'] = label
                 result.append(step)
                 resultSize = resultSize + 1
@@ -225,11 +220,12 @@ class PostTrainingPreprocessing:
                 elif self.nspMode.getStrategy() == "OnlyFirst":
                     usedIndex.addList(index_f, stnIndex_f)
                 elif self.nspMode.getStrategy() == "Soft":
-                    usedIndex.selectList.add([index_f, stnIndex_f, index_s, stnIndex_s])
+                    usedIndex.addSet(index_f, stnIndex_f, index_s, stnIndex_s)
                     
             except:
                 count = count + 1
-                print("문장 생성 실패: 시도: " + str(count))
+        
+        print("주 함수 총 시도: " + str(count))
         return result
 
     def maskedLanguageModel(self):

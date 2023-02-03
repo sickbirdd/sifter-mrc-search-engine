@@ -71,7 +71,78 @@ class preProcessorTest(TestCase):
         
     def test_next_sentence_prediction(self):
         print("get token data testing......")
-        #TODO
+
+        dataSize = self.implPreProcessor.getSize()
+        
+        #NSPmodule 기본값
+        self.implPreProcessor.nspMode.prob = 0.5
+        self.assertEqual(self.implPreProcessor.nspMode.prob, 0.5)
+
+        # 잘못된 NSP 전략은 무시해야 한다
+        baseStrategy = self.implPreProcessor.nspMode.getStrategy()
+        self.assertFalse(self.implPreProcessor.nspMode.setStrategy("NoStrategy"))
+        self.assertEqual(self.implPreProcessor.nspMode.getStrategy(), baseStrategy)
+
+
+        testSize = dataSize * 2
+        nspResult = self.implPreProcessor.nextSentencePrediction(testSize)
+
+        # 원하는 문장의 개수만큼 해당 문서쌍을 생성해야 합니다.
+        self.assertEqual(testSize, len(nspResult))
+        
+        # 각 데이터는 문서쌍 데이터와 해당 문제의 정답값을 가지고 있어야 합니다.
+        self.assertTrue("first" in nspResult[0])
+        self.assertTrue("second" in nspResult[0])
+        self.assertTrue("label" in nspResult[0])
+
+        #확률 테스트(기본값 50%)
+        nextPredict = 0
+        negPredict = 0
+        for nspComponent in nspResult:
+            if nspComponent.get('label'):
+                nextPredict = nextPredict + 1
+            else:
+                negPredict = negPredict + 1
+        self.assertEqual(nextPredict + negPredict, testSize)
+        self.assertTrue(negPredict > testSize / 10 and nextPredict > testSize / 10)
+
+        #변동 확룔 테스트(정답 다음 문장 선택률 100%)
+        self.implPreProcessor.nspMode.prob = 1
+        nspResult = self.implPreProcessor.nextSentencePrediction(testSize)
+
+        nextPredict = 0
+        negPredict = 0
+        for nspComponent in nspResult:
+            if nspComponent.get('label'):
+                nextPredict = nextPredict + 1
+            else:
+                negPredict = negPredict + 1
+
+        self.assertEqual(nextPredict, testSize)
+        self.assertEqual(negPredict, 0)
+
+        self.implPreProcessor.nspMode.prob = 0
+
+        # 다양한 문장 선택 전략 테스트
+        # OnlyFirst는 오직 첫번째 문장(판별 대상 기본 문장) 기준으로 중복을 검사합니다.
+        # 중복 여부 중요성이 적은 데이터를 여러번 사용하여 더 적은 데이터를 효과적으로 사용하기 위한 전략입니다.
+        self.assertTrue(self.implPreProcessor.nspMode.setStrategy("OnlyFirst"))
+        testSize = dataSize * 2
+        nspResult = self.implPreProcessor.nextSentencePrediction(testSize)
+        
+        self.assertEqual(testSize, len(nspResult))
+
+
+        # Soft는 문장 쌍 기준으로 중복 여부를 검사합니다.
+        # 데이터를 사용할 수 있는 모든 쌍 대상으로 검사하여 데이터가 한정적일때 많은 nsp 데이터를 생성할 수 있습니다.
+        # TODO: 함수 구조 최적화 필요
+        # self.assertTrue(self.implPreProcessor.nspMode.setStrategy("Soft"))
+        # testSize = 100
+        # nspResult = self.implPreProcessor.nextSentencePrediction(testSize)
+        
+        # self.assertEqual(testSize, len(nspResult))
+
+
         
 if __name__ == '__main__':
     main()
