@@ -231,6 +231,21 @@ class PostTrainingPreprocessing:
     def maskedLanguageModel(self):
         # 토크나이징 한 기사 본문을 특정 비율만큼 토크나이징.
         pass 
+
+    #분류된 연관 문장을 SEP token과 함께 합쳐 반환한다.
+    def getTokenData(self):
+        tokenData = list()
+        for paragraph in self.__data:
+            para = ''
+            if type(paragraph) == list:
+                for context in paragraph:
+                    if para != '':
+                        para = para + ' ' + self.tokenizer.sep_token + ' '
+                    para += context
+                tokenData.append(para)
+            else:
+                tokenData.append(paragraph)
+        return tokenData
     
     def tokenize(self, paragraph):
 

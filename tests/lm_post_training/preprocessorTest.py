@@ -1,6 +1,7 @@
 import os
 import sys
 import yaml
+import random
 
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))))
 
@@ -56,13 +57,25 @@ class preProcessorTest(TestCase):
         self.assertEqual(clean_dataset, test_answer)
         print("Done!")
         #TODO
-        
+
+    def test_tokenize(self):
+        print("tokenize testing......")
+        # 데이터 불러오고 토크나이즈
+        self.implPreProcessor.readData(dataPath=self.dataPath, dataDOM=self.dataDom)
+        data_getToken = self.implPreProcessor.getTokenData()
+        data_tokenize = self.implPreProcessor.tokenize(data_getToken)
+        num = random.randrange(0, 100)
+        print(data_tokenize[num])
+        # 처음과 마지막에 cls, sep 토큰 있는지 검사
+        assert data_tokenize[num]["input_ids"][0] == 2, "기사 맨 앞에 cls 토큰 없음"
+        # assert data_tokenize[num]["input_ids"][-1] == 3, "기사 맨 뒤에 sep 토큰 없음"
+        # 길이가 512인지 검사
+        #TODO
+        assert len(data_tokenize[num]["input_ids"]) == 512, "기사 길이가 512 아님"
+        print("tokenize test DONE!")
+    
     def test_masking(self):
         print("masking testing......")        
-        #TODO
-    
-    def test_tokenize(self):
-        print("tokenize testing......testtest")
         #TODO
         
     def test_masked_language_model(self):
