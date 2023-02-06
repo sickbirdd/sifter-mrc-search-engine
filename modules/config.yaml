@@ -18,3 +18,22 @@ dataset:
       name: empty
       path: datasets/lm_post_training/training/LabeledData
       struct: named_entity/#/content/#/sentence
+fine_tuning:
+  train_model_name: 'klue/bert-base'
+  eval_model_name: 'Kdogs/kcbert-finetuned-squad_kor_v1'
+  data_path: 'squad_kor_v1'
+  upload_path: 'domainBert-finetuned-squad_kor_v1'
+  metric_type: 'squad'
+  max_length: 512
+  stride: 128
+  n_best: 20
+  max_answer_length: 30
+  train_batch: 16
+  eval_batch: 16
+  learning_rate: 0.00005
+  epochs: 3
+  weight_decay: 0.01
+  fp16: False
+  push_to_hub: False
+  login_token: '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'
+  exec: 'eval'

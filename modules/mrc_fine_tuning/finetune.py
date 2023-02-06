@@ -1,13 +1,18 @@
-from datasets import load_dataset
+import collections
+import numpy as np
+from evaluate import load
 from transformers import AutoTokenizer
+from tqdm.auto import tqdm
 
 class fineTuningProcess:
-    def __init__(self) -> None:
-        self.tokenizer = AutoTokenizer.from_pretrained('klue/bert-base')
-        self.__rawDataset = load_dataset('squad_kor_v1')
-        self.__maxLength = 512
-        self.__stride = 128
-        
+    def __init__(self, config) -> None:
+        self.tokenizer = AutoTokenizer.from_pretrained(config['train_model_name'])
+        self.__maxLength = config['max_length']
+        self.__stride = config['stride']
+        self.__metric = load(config['metric_type'])
+        self.__nBest = config['n_best']
+        self.__maxAnswerLength = config['max_answer_length']
+    
     def preprocess_training_examples(self, examples):
         questions = [q.strip() for q in examples["question"]]
         inputs = self.tokenizer(
@@ -91,3 +96,48 @@ class fineTuningProcess:
 
         inputs["example_id"] = example_ids
         return inputs
+    
+    def compute_metrics(self, start_logits, end_logits, features, examples):
+        example_to_features = collections.defaultdict(list)
+        for idx, feature in enumerate(features):
+            example_to_features[feature["example_id"]].append(idx)
+
+        predicted_answers = []
+        for example in tqdm(examples):
+            example_id = example["id"]
+            context = example["context"]
+            answers = []
+
+            # 해당 예제와 연관된 모든 feature에 대해서...
+            for feature_index in example_to_features[example_id]:
+                start_logit = start_logits[feature_index]
+                end_logit = end_logits[feature_index]
+                offsets = features[feature_index]["offset_mapping"]
+
+                start_indexes = np.argsort(start_logit)[-1 : -self.__nBest - 1 : -1].tolist()
+                end_indexes = np.argsort(end_logit)[-1 : -self.__nBest - 1 : -1].tolist()
+                for start_index in start_indexes:
+                    for end_index in end_indexes:
+                        # 본문에 완전히 포함되지 않는 답변은 생략
+                        if offsets[start_index] is None or offsets[end_index] is None:
+                            continue
+                        # 길이가 음수거나 maxAnswerLength를 넘는 답변은 생략
+                        if end_index < start_index or end_index - start_index + 1 > self.__maxAnswerLength:
+                            continue
+
+                        answer = {
+                            "text": context[offsets[start_index][0] : offsets[end_index][1]],
+                            "logit_score": start_logit[start_index] + end_logit[end_index],
+                        }
+                        answers.append(answer)
+
+            if len(answers) > 0:
+                best_answer = max(answers, key=lambda x: x["logit_score"])
+                predicted_answers.append(
+                    {"id": example_id, "prediction_text": best_answer["text"]}
+                )
+            else:
+                predicted_answers.append({"id": example_id, "prediction_text": ""})
+
+        theoretical_answers = [{"id": ex["id"], "answers": ex["answers"]} for ex in examples]
+        return self.__metric.compute(predictions=predicted_answers, references=theoretical_answers)
