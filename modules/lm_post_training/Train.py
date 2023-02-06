@@ -12,65 +12,76 @@ with open('modules/config.yaml') as f:
 import torch
 from transformers import AdamW
 from tqdm import tqdm  # for our progress bar
-from transformers import AutoTokenizer, AutoModelForMaskedLM
-import modules.lm_post_training.Preprocessor as Preprocessor
-import modules.lm_post_training.Dataset as Dataset
+from transformers import BertForPreTraining
+from modules.lm_post_training.preprocessor import Preprocessor as pp
 
+modelName = conf["model"]["name"]
+postTrainingPreprocessor = pp(modelName)
 
 # bert 모델 불러오기
-modelName = conf["model"]["name"]
-tokenizer = AutoTokenizer.from_pretrained(modelName)
-model = AutoModelForMaskedLM.from_pretrained(modelName)
+tokenizer = postTrainingPreprocessor.tokenizer
+model = BertForPreTraining.from_pretrained(modelName)
 
 #json 데이터 추출
-integration = Preprocessor.Integration
-train_contexts, train_questions, train_answers = integration.readData(conf["dataset"]["post_training"]["training"]["path"], "스포츠")
-eval_contexts, eval_questions, eval_answers = integration.readData(conf["dataset"]["post_training"]["validation"]["path"], "스포츠")
+dataPath = conf["dataset"]["post_training"]["training"]["path"]
+dataDom = conf["dataset"]["post_training"]["test"]["struct"].split('/')
+postTrainingPreprocessor.readData(dataPath=dataPath, dataDOM=dataDom)
+train_contexts = postTrainingPreprocessor.getRawData()
 
-# 데이터 tokenizing
-inputs = tokenizer(train_contexts, return_tensors='pt', max_length=128, truncation=True, padding='max_length')
-inputs['labels'] = inputs.input_ids.detach().clone()
+# NSP
+train_contexts = postTrainingPreprocessor.nextSentencePrediction(size=1000)
 
-# bert training을 위한 masking 처리
-inputs = Preprocessor.maskModuel.masking(inputs, 0.15)
+# 데이터 정제
+refine_datas = []
+for train_context in train_contexts:
+    step = dict()
+    step["first"] = postTrainingPreprocessor.removeSpecialCharacters(train_context["first"])
+    step["second"] = postTrainingPreprocessor.removeSpecialCharacters(train_context["second"])
+    refine_datas.append(step)
 
-# # verse 8
-dataset = Dataset.MeditationsDataset(inputs)
-loader = torch.utils.data.DataLoader(dataset, batch_size=16, shuffle=True)
+# 데이터 토크나이징
+token_datas = []
+for refine_data in refine_datas:
+    token_datas.append(postTrainingPreprocessor.masking(tokenizer(refine_data["first"], refine_data["second"], return_tensors="pt")))
+print(token_datas)
 
-device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-# and move our model over to the selected device
-model.to(device)
-# activate training mode
-model.train()
+# # # verse 8
+# dataset = Dataset.MeditationsDataset(inputs)
+# loader = torch.utils.data.DataLoader(dataset, batch_size=16, shuffle=True)
 
-# initialize optimizer
-optim = AdamW(model.parameters(), lr=5e-5)
-epochs = conf["developments"]["epochs"]
+# device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+# # and move our model over to the selected device
+# model.to(device)
+# # activate training mode
+# model.train()
 
-# post-training
-for epoch in range(epochs):
-    # setup loop with TQDM and dataloader
-    loop = tqdm(loader, leave=True)
-    for batch in loop:
-        # initialize calculated gradients (from prev step)
-        optim.zero_grad()
-        # pull all tensor batches required for training
-        input_ids = batch['input_ids'].to(device)
-        attention_mask = batch['attention_mask'].to(device)
-        labels = batch['labels'].to(device)
-        # process
-        outputs = model(input_ids, attention_mask=attention_mask,
-                        labels=labels)
-        # extract loss
-        loss = outputs.loss
-        # calculate loss for every parameter that needs grad update
-        loss.backward()
-        # update parameters
-        optim.step()
-        # print relevant info to progress bar
-        loop.set_description(f'Epoch {epoch}')
-        loop.set_postfix(loss=loss.item())
+# # initialize optimizer
+# optim = AdamW(model.parameters(), lr=5e-5)
+# epochs = conf["developments"]["epochs"]
+
+# # post-training
+# for epoch in range(epochs):
+#     # setup loop with TQDM and dataloader
+#     loop = tqdm(loader, leave=True)
+#     for batch in loop:
+#         # initialize calculated gradients (from prev step)
+#         optim.zero_grad()
+#         # pull all tensor batches required for training
+#         input_ids = batch['input_ids'].to(device)
+#         attention_mask = batch['attention_mask'].to(device)
+#         labels = batch['labels'].to(device)
+#         # process
+#         outputs = model(input_ids, attention_mask=attention_mask,
+#                         labels=labels)
+#         # extract loss
+#         loss = outputs.loss
+#         # calculate loss for every parameter that needs grad update
+#         loss.backward()
+#         # update parameters
+#         optim.step()
+#         # print relevant info to progress bar
+#         loop.set_description(f'Epoch {epoch}')
+#         loop.set_postfix(loss=loss.item())
 
 #===================================
 
@@ -106,3 +117,16 @@ for epoch in range(epochs):
 
 # unmasker = pipeline('fill-mask', model=modelName)
 # unmasker(sentence)
+
+
+# class PostTraining:
+    
+#     def __init__(self) -> None:
+#         pass
+    
+#     # BERT 모델 불러오기
+#     # 데이터 추출
+#     # 데이터 정제
+#     # masking & tokenizing
+#     # nsp
+#     # training
