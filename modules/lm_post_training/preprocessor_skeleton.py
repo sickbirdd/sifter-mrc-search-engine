@@ -160,14 +160,14 @@ class PostTrainingPreprocessing:
     # 무작위 문장을 반환한다.
     # param exceptionIndex: 선택 제외목록
     # param permitFInal: 각 원문중 마지막 문장 선택 여부
-    def __getRandomSentence(self, exceptIndex, permitFinal = True, size = 1):
+    def __getRandomSentence(self, exceptIndex, size = 1):
         cnt = 0
         while cnt < 1000:
             cnt = cnt + 1
 
             try:
                 index = random.randrange(0, self.__size)
-                stnIndex = random.randrange(0, len(self.__data[index]) - size if permitFinal else size + 1)
+                stnIndex = random.randrange(0, len(self.__data[index]) - size + 1)
                 if stnIndex < 0:
                     continue
             except:
@@ -203,7 +203,7 @@ class PostTrainingPreprocessing:
                 # 2번째 문장: 확률적으로 긍정 문장(원문 다음 문장), 부정 문장 추가(다른 기사의 무작위 문장)
                 rand = random.random()
                 if rand < self.nspMode.prob:
-                    index_f, stnIndex_f = self.__getRandomSentence(usedIndex, False, 2)
+                    index_f, stnIndex_f = self.__getRandomSentence(usedIndex, 2)
                     index_s = index_f
                     stnIndex_s = stnIndex_f + 1
                     label = True

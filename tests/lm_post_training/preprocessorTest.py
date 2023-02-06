@@ -31,7 +31,8 @@ class preProcessorTest(TestCase):
         assert self.implPreProcessor.getRawData() != []
         assert len(self.implPreProcessor.getRawData()) == self.implPreProcessor.getSize()
         
-        print("현재 분류된 문장 개수: " + str(self.implPreProcessor.getSize()))
+        print("현재 분류된 기사 개수: " + str(self.implPreProcessor.getSize()))
+        print("현재 분류된 문장 개수: " + str(self.implPreProcessor.getContextSize()))
         print(self.implPreProcessor.getRawData()[0])
         
         print("2:---샘플 데이터 입력 테스트 완료---")
