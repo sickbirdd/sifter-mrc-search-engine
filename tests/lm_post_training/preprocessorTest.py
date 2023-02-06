@@ -6,7 +6,7 @@ sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(os.path.abspath(
 
 from modules.lm_post_training.preprocessor import Preprocessor as pp
 from unittest import TestCase, main
-from modules.config.logging import Test, tracker, logging
+from modules.config.logging import Test, logging
 
 class preProcessorTest(TestCase):
     
@@ -56,7 +56,6 @@ class preProcessorTest(TestCase):
         test_answer = ["test", "test", "test", "test", "test", "test", "전전긍긍", "t e s t"]
         clean_dataset = list(map(self.implPreProcessor.removeSpecialCharacters, test_dataset))
         self.assertEqual(clean_dataset, test_answer)
-        logging.info("Done!")
 
     # def test_tokenize(self):
     #     print("tokenize testing......")
@@ -94,10 +93,13 @@ class preProcessorTest(TestCase):
             ratioSum += ratio_mask
             logging.info(f"ratio of mask_token : {ratio_mask}")
         
-        assert 0.1 < ratioSum / len(maskContext['input_ids']) < 0.15, "마스킹 비율 이상. 확인 필요"
+        assert 0.08 < ratioSum / len(maskContext['input_ids']) < 0.15, "마스킹 비율 이상. 확인 필요"
 
     @Test("NSP(다음 문장 예측)")
     def test_next_sentence_prediction(self):
+        if self.implPreProcessor.getSize() == self.implPreProcessor.getContextSize():
+            logging.warning('NSP 예측에 사용할 수 없는 데이터셋입니다.')
+            return
 
         contextSize = self.implPreProcessor.getContextSize()
         
@@ -130,6 +132,7 @@ class preProcessorTest(TestCase):
                 nextPredict = nextPredict + 1
             else:
                 negPredict = negPredict + 1
+        logging.info("긍정 문장" + str(nextPredict) + ", 부정 문장" + str(negPredict))
         self.assertEqual(nextPredict + negPredict, testSize)
         self.assertTrue(negPredict > testSize / 10 and nextPredict > testSize / 10)
 

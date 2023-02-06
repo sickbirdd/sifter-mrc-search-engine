@@ -90,33 +90,33 @@ class Preprocessor:
         return self.__contextSize
     
     # 기사 하나씩 append   
-    def __contextFinder(self, contextDictAndList, dataDOM):
-        # TODO: data가 그냥 원문일 시 처리 -> type을 인자로 추가, # 하나 일때 result = [[]]에 추가?
+    def __contextFinder(self, contextDictAndList, dataDOM, deep):
+        # TODO: data가 그냥 원문일 시 처리 -> type을 인자로 추가
         if len(dataDOM) == 0:
-            return 1, contextDictAndList
+            return 1, contextDictAndList if deep == 0 else [contextDictAndList]
         
         if dataDOM[0] == '#':
             result = []
             sum = 0
             for listComponent in contextDictAndList:
-                context_count, context_list = self.__contextFinder(listComponent, dataDOM[1:])
+                context_count, context_list = self.__contextFinder(listComponent, dataDOM[1:], deep - 1)
                 sum += context_count
                 result.append(context_list)
             return sum, result
         else:
-            return self.__contextFinder(contextDictAndList.get(dataDOM[0]), dataDOM[1:])
+            return self.__contextFinder(contextDictAndList.get(dataDOM[0]), dataDOM[1:], deep)
             
     def readData(self, dataPath, dataDOM, dataFormat = ".json"):
         dataPath = Path(dataPath)
         
-        for (root, directories, files) in os.walk(dataPath):
+        for (root, _, files) in os.walk(dataPath):
             for file in files:
                 # TODO: dataFormat 여러개를 받아야할 때 처리 -> dataFormat을 list로 받아 밑의 코드 여러번 수행?
                 if dataFormat in file:
                     file_path = os.path.join(root, file)
                     with open(file_path, 'rb') as f:
                         in_dict = json.load(f)
-                    contextSize, contextList = self.__contextFinder(in_dict, dataDOM)
+                    contextSize, contextList = self.__contextFinder(in_dict, dataDOM, 2)
                     self.__data.extend(contextList)
                     self.__size = self.__size + len(contextList)
                     self.__contextSize += contextSize

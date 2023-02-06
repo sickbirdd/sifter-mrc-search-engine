@@ -173,6 +173,7 @@ ex_pkg_calc.egg-info/
 datasets/lm_post_training/training/*.json
 datasets/lm_post_training/validation/*.json
 datasets/lm_post_training/training/LabeledData
+datasets/lm_post_training/training/sourceData
 datasets/lm_post_training/test/LabeledData
 
 # 임시 테스트 함수
