@@ -172,3 +172,8 @@ ex_pkg_calc.egg-info/
 # datasets 폴더의 모든 dataset은 git과 연동하지 않는다.
 datasets/lm_post_training/training/*.json
 datasets/lm_post_training/validation/*.json
+datasets/lm_post_training/training/LabeledData
+datasets/lm_post_training/test/LabeledData
+
+# 임시 테스트 함수
+tests/temp
