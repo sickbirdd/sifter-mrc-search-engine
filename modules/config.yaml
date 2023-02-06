@@ -16,5 +16,5 @@ dataset:
       struct : named_entity/#/content/#/sentence
     test:
       name: empty
-      path: datasets/lm_post_training/test/LabeledData
+      path: datasets/lm_post_training/training/LabeledData
       struct: named_entity/#/content/#/sentence

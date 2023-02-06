@@ -67,6 +67,7 @@ class PostTrainingPreprocessing:
         self.tokenizer = AutoTokenizer.from_pretrained(modelName)
         self.__data = []
         self.__size = 0
+        self.__contextSize = 0
         self.nspMode = NSPmode()
     
     #데이터만 모두 초기화한다.
@@ -80,17 +81,23 @@ class PostTrainingPreprocessing:
     def getSize(self):
         return self.__size
     
+    def getContextSize(self):
+        return self.__contextSize
+    
     # 기사 하나씩 append   
     def __contextFinder(self, contextDictAndList, dataDOM):
         # TODO: data가 그냥 원문일 시 처리 -> type을 인자로 추가, # 하나 일때 result = [[]]에 추가?
         if len(dataDOM) == 0:
-            return contextDictAndList
+            return 1, contextDictAndList
         
         if dataDOM[0] == '#':
             result = []
+            sum = 0
             for listComponent in contextDictAndList:
-                result.append(self.__contextFinder(listComponent, dataDOM[1:]))
-            return result
+                context_count, context_list = self.__contextFinder(listComponent, dataDOM[1:])
+                sum += context_count
+                result.append(context_list)
+            return sum, result
         else:
             return self.__contextFinder(contextDictAndList.get(dataDOM[0]), dataDOM[1:])
             
@@ -104,9 +111,10 @@ class PostTrainingPreprocessing:
                     file_path = os.path.join(root, file)
                     with open(file_path, 'rb') as f:
                         in_dict = json.load(f)
-                    contextList = self.__contextFinder(in_dict, dataDOM)
+                    contextSize, contextList = self.__contextFinder(in_dict, dataDOM)
                     self.__data.extend(contextList)
                     self.__size = self.__size + len(contextList)
+                    self.__contextSize += contextSize
         
     # 불러온 데이터 정제에 사용되는 함수들
     # 함수명 변경 가능
@@ -152,14 +160,14 @@ class PostTrainingPreprocessing:
     # 무작위 문장을 반환한다.
     # param exceptionIndex: 선택 제외목록
     # param permitFInal: 각 원문중 마지막 문장 선택 여부
-    def __getRandomSentence(self, exceptIndex, permitFinal = True, size = 1):
+    def __getRandomSentence(self, exceptIndex, size = 1):
         cnt = 0
         while cnt < 1000:
             cnt = cnt + 1
 
             try:
                 index = random.randrange(0, self.__size)
-                stnIndex = random.randrange(0, len(self.__data[index]) - size if permitFinal else size + 1)
+                stnIndex = random.randrange(0, len(self.__data[index]) - size + 1)
                 if stnIndex < 0:
                     continue
             except:
@@ -187,7 +195,7 @@ class PostTrainingPreprocessing:
         usedIndex = NSPUsed("Set" if self.nspMode.getStrategy() == "Soft" else "Dict")
         count = 0
         while resultSize < size:
-            if count == 1000:
+            if count == 100000:
                 print("문장 생성 실패: 원하는 크기의 문장을 추출하는데 실패하였습니다. Size = " + str(resultSize))
                 break
             try:
@@ -195,7 +203,7 @@ class PostTrainingPreprocessing:
                 # 2번째 문장: 확률적으로 긍정 문장(원문 다음 문장), 부정 문장 추가(다른 기사의 무작위 문장)
                 rand = random.random()
                 if rand < self.nspMode.prob:
-                    index_f, stnIndex_f = self.__getRandomSentence(usedIndex, False, 2)
+                    index_f, stnIndex_f = self.__getRandomSentence(usedIndex, 2)
                     index_s = index_f
                     stnIndex_s = stnIndex_f + 1
                     label = True
@@ -225,7 +233,7 @@ class PostTrainingPreprocessing:
             except:
                 count = count + 1
         
-        print("주 함수 총 시도: " + str(count))
+        print("실패 시도 개수: " + str(count))
         return result
 
     def maskedLanguageModel(self):

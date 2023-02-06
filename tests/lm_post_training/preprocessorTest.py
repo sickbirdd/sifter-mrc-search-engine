@@ -32,7 +32,8 @@ class preProcessorTest(TestCase):
         assert self.implPreProcessor.getRawData() != []
         assert len(self.implPreProcessor.getRawData()) == self.implPreProcessor.getSize()
         
-        print("현재 분류된 문장 개수: " + str(self.implPreProcessor.getSize()))
+        print("현재 분류된 기사 개수: " + str(self.implPreProcessor.getSize()))
+        print("현재 분류된 문장 개수: " + str(self.implPreProcessor.getContextSize()))
         print(self.implPreProcessor.getRawData()[0])
         
         print("2:---샘플 데이터 입력 테스트 완료---")
@@ -85,7 +86,7 @@ class preProcessorTest(TestCase):
     def test_next_sentence_prediction(self):
         print("get token data testing......")
 
-        dataSize = self.implPreProcessor.getSize()
+        contextSize = self.implPreProcessor.getContextSize()
         
         #NSPmodule 기본값
         self.implPreProcessor.nspMode.prob = 0.5
@@ -97,7 +98,7 @@ class preProcessorTest(TestCase):
         self.assertEqual(self.implPreProcessor.nspMode.getStrategy(), baseStrategy)
 
 
-        testSize = dataSize * 2
+        testSize = contextSize // 5
         nspResult = self.implPreProcessor.nextSentencePrediction(testSize)
 
         # 원하는 문장의 개수만큼 해당 문서쌍을 생성해야 합니다.
@@ -140,7 +141,7 @@ class preProcessorTest(TestCase):
         # OnlyFirst는 오직 첫번째 문장(판별 대상 기본 문장) 기준으로 중복을 검사합니다.
         # 중복 여부 중요성이 적은 데이터를 여러번 사용하여 더 적은 데이터를 효과적으로 사용하기 위한 전략입니다.
         self.assertTrue(self.implPreProcessor.nspMode.setStrategy("OnlyFirst"))
-        testSize = dataSize * 2
+        testSize = contextSize // 5
         nspResult = self.implPreProcessor.nextSentencePrediction(testSize)
         
         self.assertEqual(testSize, len(nspResult))
