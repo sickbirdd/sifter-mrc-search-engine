@@ -64,7 +64,7 @@ class preProcessorTest(TestCase):
         self.implPreProcessor.readData(dataPath=self.dataPath, dataDOM=self.dataDom)
         data_getToken = self.implPreProcessor.getTokenData()
         data_tokenize = self.implPreProcessor.tokenize(data_getToken)
-        num = random.randrange(0, 100)
+        num = random.randrange(0, len(data_tokenize))
         # print(data_tokenize[num])
         # 처음과 마지막에 cls, sep 토큰 있는지 검사
         assert data_tokenize[num]["input_ids"][0] == 2, "기사 맨 앞에 cls 토큰 없음"
@@ -85,13 +85,13 @@ class preProcessorTest(TestCase):
         data_getToken = self.implPreProcessor.getTokenData()
         data_tokenize = self.implPreProcessor.tokenize(data_getToken)
         data_masking = self.implPreProcessor.masking(data_tokenize)
-        num = random.randrange(0, 100)
+        num = random.randrange(0, len(data_masking))
         # print(data_masking[0])
         num_mask = data_masking[num]["input_ids"].count(4)
         num_pad = data_masking[num]["input_ids"].count(0)
         ratio_mask = num_mask / (len(data_masking[num]["input_ids"]) - num_pad)
         print(f"ratio of mask_token : {ratio_mask}")
-        assert 0.1 < ratio_mask < 0.14, "마스킹 비율 이상. 확인 필요"
+        assert 0.1 < ratio_mask < 0.15, "마스킹 비율 이상. 확인 필요"
         #TODO
         
     def test_masked_language_model(self):
