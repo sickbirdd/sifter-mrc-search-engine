@@ -233,7 +233,7 @@ class PostTrainingPreprocessing:
             except:
                 count = count + 1
         
-        print("주 함수 총 시도: " + str(count))
+        print("실패 시도 개수: " + str(count))
         return result
 
     def maskedLanguageModel(self):
