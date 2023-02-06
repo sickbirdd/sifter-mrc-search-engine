@@ -5,14 +5,15 @@ from transformers import AutoTokenizer
 from tqdm.auto import tqdm
 
 class fineTuningProcess:
-    def __init__(self, config) -> None:
-        self.tokenizer = AutoTokenizer.from_pretrained(config['train_model_name'])
-        self.__maxLength = config['max_length']
-        self.__stride = config['stride']
-        self.__metric = load(config['metric_type'])
-        self.__nBest = config['n_best']
-        self.__maxAnswerLength = config['max_answer_length']
+    def __init__(self, conf) -> None:
+        self.tokenizer = AutoTokenizer.from_pretrained(conf['train_model_name'])
+        self.__maxLength = conf['max_length']
+        self.__stride = conf['stride']
+        self.__metric = load(conf['metric_type'])
+        self.__nBest = conf['n_best']
+        self.__maxAnswerLength = conf['max_answer_length']
     
+    # 훈련 데이터 전처리 함수
     def preprocess_training_examples(self, examples):
         questions = [q.strip() for q in examples["question"]]
         inputs = self.tokenizer(
@@ -68,6 +69,7 @@ class fineTuningProcess:
         inputs["end_positions"] = end_positions
         return inputs
     
+    # 검증 데이터 전처리 함수
     def preprocess_validation_examples(self, examples):
         questions = [q.strip() for q in examples["question"]]
         inputs = self.tokenizer(
@@ -97,6 +99,7 @@ class fineTuningProcess:
         inputs["example_id"] = example_ids
         return inputs
     
+    # 모델 평가 메트릭 함수
     def compute_metrics(self, start_logits, end_logits, features, examples):
         example_to_features = collections.defaultdict(list)
         for idx, feature in enumerate(features):

@@ -20,7 +20,7 @@ dataset:
       struct: named_entity/#/content/#/sentence
 fine_tuning:
   train_model_name: 'klue/bert-base'
-  eval_model_name: 'Kdogs/kcbert-finetuned-squad_kor_v1'
+  eval_model_name: 'Kdogs/klue-finetuned-squad_kor_v1'
   data_path: 'squad_kor_v1'
   upload_path: 'domainBert-finetuned-squad_kor_v1'
   metric_type: 'squad'
