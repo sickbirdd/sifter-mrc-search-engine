@@ -65,18 +65,34 @@ class preProcessorTest(TestCase):
         self.implPreProcessor.readData(dataPath=self.dataPath, dataDOM=self.dataDom)
         data_getToken = self.implPreProcessor.getTokenData()
         data_tokenize = self.implPreProcessor.tokenize(data_getToken)
-        num = random.randrange(0, 100)
-        print(data_tokenize[num])
+        num = random.randrange(0, len(data_tokenize))
+        # print(data_tokenize[num])
         # 처음과 마지막에 cls, sep 토큰 있는지 검사
         assert data_tokenize[num]["input_ids"][0] == 2, "기사 맨 앞에 cls 토큰 없음"
-        # assert data_tokenize[num]["input_ids"][-1] == 3, "기사 맨 뒤에 sep 토큰 없음"
+        for i in range(-1, -len(data_tokenize[num]["input_ids"]) - 1, -1):
+            if data_tokenize[num]["input_ids"][i] != 0:
+                check_last_token = (data_tokenize[num]["input_ids"][i] == 3)
+                break
+
+        assert check_last_token, "기사 맨 뒤에 sep 토큰 없음"
         # 길이가 512인지 검사
         #TODO
         assert len(data_tokenize[num]["input_ids"]) == 512, "기사 길이가 512 아님"
         print("tokenize test DONE!")
     
     def test_masking(self):
-        print("masking testing......")        
+        print("masking testing......")
+        self.implPreProcessor.readData(dataPath=self.dataPath, dataDOM=self.dataDom)
+        data_getToken = self.implPreProcessor.getTokenData()
+        data_tokenize = self.implPreProcessor.tokenize(data_getToken)
+        data_masking = self.implPreProcessor.masking(data_tokenize)
+        num = random.randrange(0, len(data_masking))
+        # print(data_masking[0])
+        num_mask = data_masking[num]["input_ids"].count(4)
+        num_pad = data_masking[num]["input_ids"].count(0)
+        ratio_mask = num_mask / (len(data_masking[num]["input_ids"]) - num_pad)
+        print(f"ratio of mask_token : {ratio_mask}")
+        assert 0.1 < ratio_mask < 0.15, "마스킹 비율 이상. 확인 필요"
         #TODO
         
     def test_masked_language_model(self):

@@ -274,8 +274,12 @@ class PostTrainingPreprocessing:
         maskToken=self.tokenizer.mask_token_id,
         padToken=self.tokenizer.pad_token_id
         if type(maskToken) is tuple:
-            print("tuuuuuuple")
+            # print("tuuuuuuple")
             maskToken = maskToken[0]
+
+        if type(sepToken) is tuple:
+            # print("tuuuuuuple")
+            sepToken = sepToken[0]
 
         # 마스킹 전 label 키에 id 복사
         for data in data_tokenizing:
@@ -305,11 +309,11 @@ class PostTrainingPreprocessing:
                     # 15%의 마스킹 될 토큰 중 10%는 다른 토큰으로 대체
                     if mask_ratio <= 0.1:
                         data["input_ids"][i] = int(torch.randint(low=10, high=51200, size=(1,)))
-                        print("10%")
+                        # print("10%")
                     # 10%는 선택됐지만 그대로 두기    
                     elif mask_ratio <= 0.2:
                         data["input_ids"][i] = token
-                        print("20%")
+                        # print("20%")
                     # 나머지는 마스크 토큰으로 변경
                     else:
                         # print("MASK!")
