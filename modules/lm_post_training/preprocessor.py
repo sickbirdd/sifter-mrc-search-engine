@@ -23,13 +23,13 @@ class nsp_mode:
         self.__strageList = set(["NoDupplicate", "OnlyFirst", "Soft"])
         self.__strategy = "NoDupplicate"
 
-    def getStrategyList(self):
+    def get_strategy_list(self):
         return self.__strageList
 
-    def getStrategy(self):
+    def get_strategy(self):
         return self.__strategy
 
-    def setStrategy(self, strategy):
+    def set_strategy(self, strategy):
         if strategy in self.__strageList:
             self.__strategy = strategy
             return True
@@ -46,23 +46,32 @@ class nsp_dataset:
         self.vectorType = vectorType
         self.__list = dict() if vectorType == "Dict" else set()
     
-    def isUsed(self, index, stnIndex, index_s = "", stnIndex_s = ""):
+    def is_used(self, index, stnIndex, index_s = "", stnIndex_s = ""):
         if self.vectorType == "Dict":
             return index in self.__list and (stnIndex in self.__list[index] or "*" in self.__list[index])
         elif self.vectorType == "Set":
             return [index, stnIndex, index_s, stnIndex_s] in self.__list
 
-    def addList(self, index, stnIndex):
+    def add_list(self, index, stnIndex):
         if not index in self.__list:
             self.__list[index] = set()
         self.__list[index].add(stnIndex)
 
-    def addSet(self, index_f, stnIndex_f, index_s, stnIndex_s):
+    def add_set(self, index_f, stnIndex_f, index_s, stnIndex_s):
         self.__list.add([index_f, stnIndex_f, index_s, stnIndex_s])
     
-    def removeList(self, index, stnIndex):
+    def remove_list(self, index, stnIndex):
         if index in self.__list and stnIndex in self.__list[index]:
             self.__list[index].remove(stnIndex)
+            
+# 전처리 데이터 셋 처리 객체
+class MeditationsDataset(torch.utils.data.Dataset):
+    def __init__(self, encodings):
+        self.encodings = encodings
+    def __getitem__(self, idx):
+        return {key: torch.tensor(val[idx]) for key, val in self.encodings.items()}
+    def __len__(self):
+        return len(self.encodings.input_ids)            
 
 # 전처리 처리 객체
 @tracker
@@ -80,17 +89,17 @@ class Preprocessor:
         self.__size = 0
         self.__contextSize = 0
 
-    def getRawData(self):
+    def get_raw_data(self):
         return self.__data
 
-    def getSize(self):
+    def get_size(self):
         return self.__size
     
-    def getContextSize(self):
+    def get_context_size(self):
         return self.__contextSize
     
     # 기사 하나씩 append   
-    def __contextFinder(self, contextDictAndList, dataDOM, deep):
+    def __context_finder(self, contextDictAndList, dataDOM, deep):
         # TODO: data가 그냥 원문일 시 처리 -> type을 인자로 추가
         if len(dataDOM) == 0:
             return 1, contextDictAndList if deep == 0 else [contextDictAndList]
@@ -99,14 +108,14 @@ class Preprocessor:
             result = []
             sum = 0
             for listComponent in contextDictAndList:
-                context_count, context_list = self.__contextFinder(listComponent, dataDOM[1:], deep - 1)
+                context_count, context_list = self.__context_finder(listComponent, dataDOM[1:], deep - 1)
                 sum += context_count
                 result.append(context_list)
             return sum, result
         else:
-            return self.__contextFinder(contextDictAndList.get(dataDOM[0]), dataDOM[1:], deep)
+            return self.__context_finder(contextDictAndList.get(dataDOM[0]), dataDOM[1:], deep)
             
-    def readData(self, dataPath, dataDOM, dataFormat = ".json"):
+    def read_data(self, dataPath, dataDOM, dataFormat = ".json"):
         dataPath = Path(dataPath)
         
         for (root, _, files) in os.walk(dataPath):
@@ -116,48 +125,48 @@ class Preprocessor:
                     file_path = os.path.join(root, file)
                     with open(file_path, 'rb') as f:
                         in_dict = json.load(f)
-                    contextSize, contextList = self.__contextFinder(in_dict, dataDOM, 2)
+                    contextSize, contextList = self.__context_finder(in_dict, dataDOM, 2)
                     self.__data.extend(contextList)
                     self.__size = self.__size + len(contextList)
                     self.__contextSize += contextSize
         
     # 불러온 데이터 정제에 사용되는 함수들
     # 함수명 변경 가능
-    def removeSpecialCharacters(self, sentence):
+    def remove_special_characters(self, sentence):
         # 문장 시작과 끝 공백 제거
-        def stripSentence(sentence):
+        def strip_sentence(sentence):
             return sentence.strip()
         # HTML 태그 제거
-        def subTag(sentence):
+        def sub_tag(sentence):
             return re.sub('<[^>]*>', '', sentence)
         # 이메일 주소 제거
-        def subEmail(sentence):
+        def sub_email(sentence):
             return re.sub('([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)', '', sentence)
         # URL 제거
-        def subURL(sentence):
+        def sub_URL(sentence):
             return re.sub('(http|ftp|https)://(?:[-\w.]|(?:%[\da-fA-F]{2}))+', '', sentence)
         # 꺽쇠 및 꺽쇠 안 문자 제거
-        def subBracket(sentence):
+        def sub_bracket(sentence):
             return re.sub(r'\<[^>]*\>', '', sentence)
         # 자음 모음 제거
-        def subConVow(sentence):
+        def sub_con_vow(sentence):
             return re.sub('([ㄱ-ㅎㅏ-ㅣ]+)', '', sentence)
         # 공백 여러 개 하나로 치환
-        def subBlank(sentence):
+        def sub_blank(sentence):
             return ' '.join(sentence.split())
         # 세 번 이상 반복되는 문자 두 개로 치환
-        def subRepeatChar(sentence):
+        def sub_repeat_char(sentence):
             p = re.compile('(([a-zA-Z0-9가-힣])\\2{2,})')
             result = p.findall(sentence)
             for r, _ in result:
                 sentence = sentence.replace(r, r[:2])
             return sentence
         # 특수문자 제거
-        def subNoise(sentence):
+        def sub_noise(sentence):
             sentence = re.sub(r"[^\uAC00-\uD7A30-9a-zA-Z\s]", '', sentence)
             return sentence
         # 전체 함수 적용
-        cleanMethods = [stripSentence, subTag, subEmail, subURL, subBracket, subConVow, subBlank, subRepeatChar, subNoise]
+        cleanMethods = [strip_sentence, sub_tag, sub_email, sub_URL, sub_bracket, sub_con_vow, sub_blank, sub_repeat_char, sub_noise]
         for method in cleanMethods:
             sentence = method(sentence)
         return sentence
@@ -165,7 +174,7 @@ class Preprocessor:
     # 무작위 문장을 반환한다.
     # param exceptionIndex: 선택 제외목록
     # param permitFInal: 각 원문중 마지막 문장 선택 여부
-    def __getRandomSentence(self, exceptIndex, size = 1):
+    def __get_random_sentence(self, exceptIndex, size = 1):
         cnt = 0
         while cnt < 1000:
             cnt = cnt + 1
@@ -180,7 +189,7 @@ class Preprocessor:
             
             checkUsed = False
             for _ in range(size):
-                if exceptIndex.isUsed(index, stnIndex):
+                if exceptIndex.is_used(index, stnIndex):
                     checkUsed = True
                     break
 
@@ -194,10 +203,10 @@ class Preprocessor:
     # 사전 학습을 통해 Bert 성능을 향상시키기 위한 다음 문장 예측 기능을 수행하는 모듈
     # param size: 문장 크기
     # sepToken: 문장 구분 크기
-    def nextSentencePrediction(self, size):
+    def next_sentence_prediction(self, size):
         result = []
         resultSize = 0
-        usedIndex = nsp_dataset("Set" if self.nsp_mode.getStrategy() == "Soft" else "Dict")
+        usedIndex = nsp_dataset("Set" if self.nsp_mode.get_strategy() == "Soft" else "Dict")
         count = 0
         while resultSize < size:
             if count == 100000:
@@ -208,15 +217,15 @@ class Preprocessor:
                 # 2번째 문장: 확률적으로 긍정 문장(원문 다음 문장), 부정 문장 추가(다른 기사의 무작위 문장)
                 rand = random.random()
                 if rand < self.nsp_mode.prob:
-                    index_f, stnIndex_f = self.__getRandomSentence(usedIndex, 2)
+                    index_f, stnIndex_f = self.__get_random_sentence(usedIndex, 2)
                     index_s = index_f
                     stnIndex_s = stnIndex_f + 1
                     label = True
                 else:
-                    index_f, stnIndex_f = self.__getRandomSentence(usedIndex)
-                    usedIndex.addList(index_f, "*")
-                    index_s, stnIndex_s = self.__getRandomSentence(usedIndex)
-                    usedIndex.removeList(index_f, "*")
+                    index_f, stnIndex_f = self.__get_random_sentence(usedIndex)
+                    usedIndex.add_list(index_f, "*")
+                    index_s, stnIndex_s = self.__get_random_sentence(usedIndex)
+                    usedIndex.remove_list(index_f, "*")
                     label = False
                 
                 step = dict()
@@ -227,13 +236,13 @@ class Preprocessor:
                 step['label'] = label
                 result.append(step)
                 resultSize = resultSize + 1
-                if self.nsp_mode.getStrategy() == "NoDupplicate":
-                    usedIndex.addList(index_f, stnIndex_f)
-                    usedIndex.addList(index_s, stnIndex_s)
-                elif self.nsp_mode.getStrategy() == "OnlyFirst":
-                    usedIndex.addList(index_f, stnIndex_f)
-                elif self.nsp_mode.getStrategy() == "Soft":
-                    usedIndex.addSet(index_f, stnIndex_f, index_s, stnIndex_s)
+                if self.nsp_mode.get_strategy() == "NoDupplicate":
+                    usedIndex.add_list(index_f, stnIndex_f)
+                    usedIndex.add_list(index_s, stnIndex_s)
+                elif self.nsp_mode.get_strategy() == "OnlyFirst":
+                    usedIndex.add_list(index_f, stnIndex_f)
+                elif self.nsp_mode.get_strategy() == "Soft":
+                    usedIndex.add_set(index_f, stnIndex_f, index_s, stnIndex_s)
                     
             except:
                 count = count + 1

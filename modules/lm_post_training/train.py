@@ -10,7 +10,7 @@ import torch
 from transformers import AdamW
 from tqdm import tqdm  # for our progress bar
 from transformers import BertForPreTraining
-from modules.lm_post_training.dataset import MeditationsDataset as MD
+from modules.lm_post_training.preprocessor import MeditationsDataset as MD
 from modules.lm_post_training.preprocessor import Preprocessor as pp
 
 modelName = conf["model"]["name"]
@@ -23,11 +23,11 @@ model = BertForPreTraining.from_pretrained(modelName)
 #json 데이터 추출
 dataPath = conf["dataset"]["post_training"]["test"]["path"]
 dataDom = conf["dataset"]["post_training"]["test"]["struct"].split('/')
-postTrainingPreprocessor.readData(dataPath=dataPath, dataDOM=dataDom)
-train_contexts = postTrainingPreprocessor.getRawData()
+postTrainingPreprocessor.read_data(dataPath=dataPath, dataDOM=dataDom)
+train_contexts = postTrainingPreprocessor.get_raw_data()
 
 # NSP
-train_contexts = postTrainingPreprocessor.nextSentencePrediction(size=postTrainingPreprocessor.getContextSize())
+train_contexts = postTrainingPreprocessor.next_sentence_prediction(size=postTrainingPreprocessor.get_context_size())
 # size=sys.argv[1]
 
 # 데이터 정제
@@ -35,7 +35,7 @@ refine_datas = [[], [], []]
 step = dict()
 for train_context in train_contexts:
     
-    refine_datas[0].append(postTrainingPreprocessor.removeSpecialCharacters(train_context["first"]))
+    refine_datas[0].append(postTrainingPreprocessor.remove_special_characters(train_context["first"]))
     refine_datas[1].append(postTrainingPreprocessor.removeSpecialCharacters(train_context["second"]))
     refine_datas[2].append(train_context["label"])
 

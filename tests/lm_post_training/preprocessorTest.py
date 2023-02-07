@@ -22,19 +22,19 @@ class preProcessorTest(TestCase):
         self.dataDom = conf["dataset"]["post_training"]["test"]["struct"].split('/')
         
         logging.info("1:---최초 생성 테스트---")
-        assert self.implPreProcessor.getSize() == 0
-        assert self.implPreProcessor.getRawData() == []
+        assert self.implPreProcessor.get_size() == 0
+        assert self.implPreProcessor.get_raw_data() == []
         logging.info("1:---최초 생성 테스트 완료---")
         logging.info("2:---샘플 데이터 입력 테스트---")
         
-        self.implPreProcessor.readData(dataPath=self.dataPath, dataDOM=self.dataDom)
-        assert self.implPreProcessor.getSize != 0
-        assert self.implPreProcessor.getRawData() != []
-        assert len(self.implPreProcessor.getRawData()) == self.implPreProcessor.getSize()
+        self.implPreProcessor.read_data(dataPath=self.dataPath, dataDOM=self.dataDom)
+        assert self.implPreProcessor.get_size != 0
+        assert self.implPreProcessor.get_raw_data() != []
+        assert len(self.implPreProcessor.get_raw_data()) == self.implPreProcessor.get_size()
         
-        logging.info("현재 분류된 기사 개수: " + str(self.implPreProcessor.getSize()))
-        logging.info("현재 분류된 문장 개수: " + str(self.implPreProcessor.getContextSize()))
-        logging.info(self.implPreProcessor.getRawData()[0])
+        logging.info("현재 분류된 기사 개수: " + str(self.implPreProcessor.get_size()))
+        logging.info("현재 분류된 문장 개수: " + str(self.implPreProcessor.get_context_size()))
+        logging.info(self.implPreProcessor.get_raw_data()[0])
         
         logging.info("2:---샘플 데이터 입력 테스트 완료---")
         
@@ -54,32 +54,12 @@ class preProcessorTest(TestCase):
     def test_remove_special_characters(self):
         test_dataset = [" test ", "<html>test</html>", "abcdef123456@naver.com test", "!t@e#$s%t^&*()", "😀😃😄t😁e😆😅s😂t", "tㅔeㅔsㅅtㅌ", "전전전전긍긍긍긍", "t   e   s   t"]
         test_answer = ["test", "test", "test", "test", "test", "test", "전전긍긍", "t e s t"]
-        clean_dataset = list(map(self.implPreProcessor.removeSpecialCharacters, test_dataset))
+        clean_dataset = list(map(self.implPreProcessor.remove_special_characters, test_dataset))
         self.assertEqual(clean_dataset, test_answer)
-
-    # def test_tokenize(self):
-    #     print("tokenize testing......")
-    #     # 데이터 불러오고 토크나이즈
-    #     data_getToken = self.implPreProcessor.getTokenData()
-    #     data_tokenize = self.implPreProcessor.tokenize(data_getToken)
-    #     num = random.randrange(0, len(data_tokenize))
-    #     # print(data_tokenize[num])
-    #     # 처음과 마지막에 cls, sep 토큰 있는지 검사
-    #     assert data_tokenize[num]["input_ids"][0] == 2, "기사 맨 앞에 cls 토큰 없음"
-    #     for i in range(-1, -len(data_tokenize[num]["input_ids"]) - 1, -1):
-    #         if data_tokenize[num]["input_ids"][i] != 0:
-    #             check_last_token = (data_tokenize[num]["input_ids"][i] == 3)
-    #             break
-
-    #     assert check_last_token, "기사 맨 뒤에 sep 토큰 없음"
-    #     # 길이가 512인지 검사
-    #     #TODO
-    #     assert len(data_tokenize[num]["input_ids"]) == 512, "기사 길이가 512 아님"
-    #     print("tokenize test DONE!")
     
     @Test("마스크")
     def test_masking(self):
-        sampleContext = self.implPreProcessor.getRawData()[0]
+        sampleContext = self.implPreProcessor.get_raw_data()[0]
         tokenContext = self.implPreProcessor.tokenizer(sampleContext)
         maskContext = self.implPreProcessor.masking(tokenContext)
         # num = random.randrange(0, len(maskContext))
@@ -96,24 +76,24 @@ class preProcessorTest(TestCase):
 
     @Test("NSP(다음 문장 예측)")
     def test_next_sentence_prediction(self):
-        if self.implPreProcessor.getSize() == self.implPreProcessor.getContextSize():
+        if self.implPreProcessor.get_size() == self.implPreProcessor.get_context_size():
             logging.warning('NSP 예측에 사용할 수 없는 데이터셋입니다.')
             return
 
-        contextSize = self.implPreProcessor.getContextSize()
+        contextSize = self.implPreProcessor.get_context_size()
         
         #NSPmodule 기본값
         self.implPreProcessor.nsp_mode.prob = 0.5
         self.assertEqual(self.implPreProcessor.nsp_mode.prob, 0.5)
 
         # 잘못된 NSP 전략은 무시해야 한다
-        baseStrategy = self.implPreProcessor.nsp_mode.getStrategy()
-        self.assertFalse(self.implPreProcessor.nsp_mode.setStrategy("NoStrategy"))
-        self.assertEqual(self.implPreProcessor.nsp_mode.getStrategy(), baseStrategy)
+        baseStrategy = self.implPreProcessor.nsp_mode.get_strategy()
+        self.assertFalse(self.implPreProcessor.nsp_mode.set_strategy("NoStrategy"))
+        self.assertEqual(self.implPreProcessor.nsp_mode.get_strategy(), baseStrategy)
 
 
         testSize = contextSize // 5
-        nspResult = self.implPreProcessor.nextSentencePrediction(testSize)
+        nspResult = self.implPreProcessor.next_sentence_prediction(testSize)
 
         # 원하는 문장의 개수만큼 해당 문서쌍을 생성해야 합니다.
         self.assertEqual(testSize, len(nspResult))
@@ -137,7 +117,7 @@ class preProcessorTest(TestCase):
 
         #변동 확룔 테스트(정답 다음 문장 선택률 100%)
         self.implPreProcessor.nsp_mode.prob = 1
-        nspResult = self.implPreProcessor.nextSentencePrediction(testSize)
+        nspResult = self.implPreProcessor.next_sentence_prediction(testSize)
 
         nextPredict = 0
         negPredict = 0
@@ -155,9 +135,9 @@ class preProcessorTest(TestCase):
         # 다양한 문장 선택 전략 테스트
         # OnlyFirst는 오직 첫번째 문장(판별 대상 기본 문장) 기준으로 중복을 검사합니다.
         # 중복 여부 중요성이 적은 데이터를 여러번 사용하여 더 적은 데이터를 효과적으로 사용하기 위한 전략입니다.
-        self.assertTrue(self.implPreProcessor.nsp_mode.setStrategy("OnlyFirst"))
+        self.assertTrue(self.implPreProcessor.nsp_mode.set_strategy("OnlyFirst"))
         testSize = contextSize // 5
-        nspResult = self.implPreProcessor.nextSentencePrediction(testSize)
+        nspResult = self.implPreProcessor.next_sentence_prediction(testSize)
         
         self.assertEqual(testSize, len(nspResult))
 
