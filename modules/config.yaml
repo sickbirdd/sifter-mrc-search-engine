@@ -16,7 +16,7 @@ dataset:
       struct : named_entity/#/content/#/sentence
     test:
       name: empty
-      path: datasets/lm_post_training/training/LabeledData
+      path: datasets/lm_post_training/test/LabeledData
       struct: named_entity/#/content/#/sentence
 fine_tuning:
   data_path: 'squad_kor_v1'
@@ -40,3 +40,25 @@ fine_tuning:
   push_to_hub: False
   login_token: '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'
   exec: 'eval'
+log:
+  formatters:
+    default:
+      format: '%(levelname)s[%(module)s]: %(message)s (%(asctime)s)'
+    test:
+      foramt: '%(levelname)s[%(module)s]: %(message)s'
+  handlers:
+    root:
+      class: logging.StreamHandler
+      level: DEBUG
+      formatter: default
+      stream: "ext://sys.stdout"
+    file:
+      class: logging.FileHandler
+      level: WARNING
+      formatter: default
+      filename: log.txt
+    test:
+      class: logging.StreamHanlder
+      level: DEBUG
+      formatter: default
+      stream: "ext://sys.stdout"
