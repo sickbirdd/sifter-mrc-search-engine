@@ -13,8 +13,8 @@ import torch
 from transformers import AdamW
 from tqdm import tqdm  # for our progress bar
 from transformers import AutoTokenizer, AutoModelForMaskedLM
-import modules.lm_post_training.Preprocessor as Preprocessor
-import modules.lm_post_training.Dataset as Dataset
+import modules.lm_post_training.preprocessor as preprocessor
+import modules.lm_post_training.dataset as dataset
 
 
 # bert 모델 불러오기
@@ -23,7 +23,7 @@ tokenizer = AutoTokenizer.from_pretrained(modelName)
 model = AutoModelForMaskedLM.from_pretrained(modelName)
 
 #json 데이터 추출
-integration = Preprocessor.Integration
+integration = preprocessor.Integration
 train_contexts, train_questions, train_answers = integration.readData(conf["dataset"]["post_training"]["training"]["path"], "스포츠")
 eval_contexts, eval_questions, eval_answers = integration.readData(conf["dataset"]["post_training"]["validation"]["path"], "스포츠")
 
@@ -32,10 +32,10 @@ inputs = tokenizer(train_contexts, return_tensors='pt', max_length=128, truncati
 inputs['labels'] = inputs.input_ids.detach().clone()
 
 # bert training을 위한 masking 처리
-inputs = Preprocessor.maskModuel.masking(inputs, 0.15)
+inputs = preprocessor.maskModuel.masking(inputs, 0.15)
 
 # # verse 8
-dataset = Dataset.MeditationsDataset(inputs)
+dataset = dataset.MeditationsDataset(inputs)
 loader = torch.utils.data.DataLoader(dataset, batch_size=16, shuffle=True)
 
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
