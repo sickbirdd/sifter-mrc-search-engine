@@ -19,10 +19,13 @@ dataset:
       path: datasets/lm_post_training/training/LabeledData
       struct: named_entity/#/content/#/sentence
 fine_tuning:
-  train_model_name: 'klue/bert-base'
-  eval_model_name: 'Kdogs/klue-finetuned-squad_kor_v1'
   data_path: 'squad_kor_v1'
-  upload_path: 'domainBert-finetuned-squad_kor_v1'
+  train:
+    model_name: 'klue/bert-base'
+    upload_path: 'domainBert-finetuned-squad_kor_v1'
+  eval:
+    model_name: 'Kdogs/klue-finetuned-squad_kor_v1'
+    eval_path: 'eval_model'
   metric_type: 'squad'
   max_length: 512
   stride: 128

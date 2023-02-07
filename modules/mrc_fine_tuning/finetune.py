@@ -6,7 +6,7 @@ from tqdm.auto import tqdm
 
 class fineTuningProcess:
     def __init__(self, conf) -> None:
-        self.tokenizer = AutoTokenizer.from_pretrained(conf['train_model_name'])
+        self.tokenizer = AutoTokenizer.from_pretrained(conf['train']['model_name'])
         self.__maxLength = conf['max_length']
         self.__stride = conf['stride']
         self.__metric = load(conf['metric_type'])
