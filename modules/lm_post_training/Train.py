@@ -10,6 +10,7 @@ import torch
 from transformers import AdamW
 from tqdm import tqdm  # for our progress bar
 from transformers import BertForPreTraining
+from modules.lm_post_training.Dataset import MeditationsDataset as MD
 from modules.lm_post_training.preprocessor import Preprocessor as pp
 
 modelName = conf["model"]["name"]
@@ -29,36 +30,30 @@ train_contexts = postTrainingPreprocessor.getRawData()
 train_contexts = postTrainingPreprocessor.nextSentencePrediction(size=1000)
 
 # 데이터 정제
-refine_datas = []
+refine_datas = [[], [], []]
+step = dict()
 for train_context in train_contexts:
-    step = dict()
-    step["first"] = postTrainingPreprocessor.removeSpecialCharacters(train_context["first"])
-    step["second"] = postTrainingPreprocessor.removeSpecialCharacters(train_context["second"])
-    refine_datas.append(step)
+    
+    refine_datas[0].append(postTrainingPreprocessor.removeSpecialCharacters(train_context["first"]))
+    refine_datas[1].append(postTrainingPreprocessor.removeSpecialCharacters(train_context["second"]))
+    refine_datas[2].append(train_context["label"])
 
-# 데이터 토크나이징
-token_datas = []
-for refine_data in refine_datas:
-    token_datas.append(postTrainingPreprocessor.masking(
-        tokenizer(refine_data["first"],
-                  refine_data["second"],
-                  add_special_tokens=True,
-                  truncation=True,
-                  max_length=512,
-                  padding="max_length",
-                  return_tensors="pt")
-        ))
+# 데이터 토크나이징 & 마스킹
+token_datas = postTrainingPreprocessor.masking(
+                                                tokenizer(refine_datas[0],
+                                                          refine_datas[1],
+                                                          add_special_tokens=True,
+                                                          truncation=True,
+                                                          max_length=512,
+                                                          padding="max_length",
+                                                          return_tensors="pt"
+                                                          )
+                                                )
 
-for token_data, train_context in zip(token_datas, train_contexts):
-    token_data['next_sentence_label'] = torch.LongTensor([[train_context['label']]])
+token_datas["next_sentence_label"] = torch.LongTensor(refine_datas[2])
 
-print(token_datas[0])
-print(token_datas[1])
-print(token_datas[2])
-print(token_datas[3])
-print(token_datas[4])
 # # verse 8-
-loader = torch.utils.data.DataLoader(token_datas, batch_size=1, shuffle=True)
+loader = torch.utils.data.DataLoader(MD(token_datas), batch_size=16, shuffle=True)
 
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 # and move our model over to the selected device
@@ -83,7 +78,9 @@ for epoch in range(epochs):
         attention_mask = batch['attention_mask'].to(device)
         labels = batch['label'].to(device)
         next_sentence_label = batch['next_sentence_label'].to(device)
+        
         # process
+        outputs = model(input_ids)
         outputs = model(input_ids=input_ids, 
                     token_type_ids=token_type_ids, 
                     attention_mask=attention_mask, 
@@ -98,40 +95,3 @@ for epoch in range(epochs):
         # print relevant info to progress bar
         loop.set_description(f'Epoch {epoch}')
         loop.set_postfix(loss=loss.item())
-
-#===================================
-
-# model.save_pretrained("saving_folder")
-
-# # verse 14
-# from transformers import pipeline
-
-# unmasker = pipeline('fill-mask', model=modelName)
-# unmasker(sentence)
-
-# # verse 15
-# from transformers import TrainingArguments
-
-# args = TrainingArguments(
-#     output_dir='out',
-#     per_device_train_batch_size=16,
-#     num_train_epochs=2
-# )
-
-# # verse 16
-# from transformers import Trainer
-
-# trainer = Trainer(
-#     model=model,
-#     args=args,
-#     train_dataset=token_datas
-# )
-
-# # verse 17
-# trainer.train()
-
-# # verse 18
-# from transformers import pipeline
-
-# unmasker = pipeline('fill-mask', model=modelName)
-# unmasker(sentence)
