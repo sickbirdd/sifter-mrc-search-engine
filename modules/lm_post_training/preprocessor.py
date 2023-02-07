@@ -247,11 +247,11 @@ class Preprocessor:
         maskToken=self.tokenizer.mask_token_id,
         padToken=self.tokenizer.pad_token_id
         if type(maskToken) is tuple:
-            logging.debug("tuple로 호출되었습니다.")
+            # logging.debug("tuple로 호출되었습니다.")
             maskToken = maskToken[0]
 
         if type(sepToken) is tuple:
-            logging.debug("tuple로 호출되었습니다.")
+            # logging.debug("tuple로 호출되었습니다.")
             sepToken = sepToken[0]
 
         # 마스킹 전 label 키에 id 복사
@@ -276,7 +276,7 @@ class Preprocessor:
                     mask_ratio = torch.rand(1)
                     # 15%의 마스킹 될 토큰 중 10%는 다른 토큰으로 대체
                     if mask_ratio <= 0.1:
-                        context[i] = int(torch.randint(low=10, high=51200, size=(1,)))
+                        context[i] = int(torch.randint(low=10, high=self.tokenizer.vocab_size, size=(1,)))
                     # 10%는 선택됐지만 그대로 두기    
                     elif mask_ratio <= 0.2:
                         context[i] = token
