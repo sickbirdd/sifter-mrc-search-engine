@@ -27,7 +27,8 @@ postTrainingPreprocessor.readData(dataPath=dataPath, dataDOM=dataDom)
 train_contexts = postTrainingPreprocessor.getRawData()
 
 # NSP
-train_contexts = postTrainingPreprocessor.nextSentencePrediction(size=1000)
+train_contexts = postTrainingPreprocessor.nextSentencePrediction(size=postTrainingPreprocessor.getContextSize())
+# size=sys.argv[1]
 
 # 데이터 정제
 refine_datas = [[], [], []]
