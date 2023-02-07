@@ -10,7 +10,7 @@ import torch
 from transformers import AdamW
 from tqdm import tqdm  # for our progress bar
 from transformers import BertForPreTraining
-from modules.lm_post_training.Dataset import MeditationsDataset as MD
+from modules.lm_post_training.dataset import MeditationsDataset as MD
 from modules.lm_post_training.preprocessor import Preprocessor as pp
 
 modelName = conf["model"]["name"]
@@ -80,7 +80,6 @@ for epoch in range(epochs):
         next_sentence_label = batch['next_sentence_label'].to(device)
         
         # process
-        outputs = model(input_ids)
         outputs = model(input_ids=input_ids, 
                     token_type_ids=token_type_ids, 
                     attention_mask=attention_mask, 

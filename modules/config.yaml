@@ -16,5 +16,49 @@ dataset:
       struct : named_entity/#/content/#/sentence
     test:
       name: empty
-      path: datasets/lm_post_training/training/LabeledData
+      path: datasets/lm_post_training/test/LabeledData
       struct: named_entity/#/content/#/sentence
+fine_tuning:
+  data_path: 'squad_kor_v1'
+  train:
+    model_name: 'klue/bert-base'
+    upload_path: 'domainBert-finetuned-squad_kor_v1'
+  eval:
+    model_name: 'Kdogs/klue-finetuned-squad_kor_v1'
+    eval_path: 'eval_model'
+  metric_type: 'squad'
+  max_length: 512
+  stride: 128
+  n_best: 20
+  max_answer_length: 30
+  train_batch: 16
+  eval_batch: 16
+  learning_rate: 0.00005
+  epochs: 3
+  weight_decay: 0.01
+  fp16: False
+  push_to_hub: False
+  login_token: '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'
+  exec: 'eval'
+log:
+  formatters:
+    default:
+      format: '%(levelname)s[%(module)s]: %(message)s (%(asctime)s)'
+    test:
+      foramt: '%(levelname)s[%(module)s]: %(message)s'
+  handlers:
+    root:
+      class: logging.StreamHandler
+      level: DEBUG
+      formatter: default
+      stream: "ext://sys.stdout"
+    file:
+      class: logging.FileHandler
+      level: WARNING
+      formatter: default
+      filename: log.txt
+    test:
+      class: logging.StreamHanlder
+      level: DEBUG
+      formatter: default
+      stream: "ext://sys.stdout"
