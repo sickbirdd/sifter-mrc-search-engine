@@ -50,12 +50,15 @@ for refine_data in refine_datas:
         ))
 
 for token_data, train_context in zip(token_datas, train_contexts):
-    token_data['next_sentence_label'] = torch.LongTensor([train_context['label']])
+    token_data['next_sentence_label'] = torch.LongTensor([[train_context['label']]])
 
-print(token_datas[0].keys())
-
+print(token_datas[0])
+print(token_datas[1])
+print(token_datas[2])
+print(token_datas[3])
+print(token_datas[4])
 # # verse 8-
-loader = torch.utils.data.DataLoader(token_datas, batch_size=16, shuffle=True)
+loader = torch.utils.data.DataLoader(token_datas, batch_size=1, shuffle=True)
 
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 # and move our model over to the selected device
@@ -78,10 +81,10 @@ for epoch in range(epochs):
         input_ids = batch['input_ids'].to(device)
         token_type_ids = batch['token_type_ids'].to(device)
         attention_mask = batch['attention_mask'].to(device)
-        next_sentence_label = batch['next_sentence_label'].to(device)
         labels = batch['label'].to(device)
+        next_sentence_label = batch['next_sentence_label'].to(device)
         # process
-        outputs = model(input_ids, 
+        outputs = model(input_ids=input_ids, 
                     token_type_ids=token_type_ids, 
                     attention_mask=attention_mask, 
                     next_sentence_label=next_sentence_label, 
