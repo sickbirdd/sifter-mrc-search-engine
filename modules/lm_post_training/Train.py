@@ -1,9 +1,6 @@
 import os
 import sys
-path_modules =  os.path.dirname(os.path.abspath(os.path.dirname(os.path.abspath(__file__)) ))
-path_root = os.path.dirname(os.path.abspath(path_modules))
-sys.path.append(path_modules)
-sys.path.append(path_root)
+sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))))
 
 import yaml
 with open('modules/config.yaml') as f:
@@ -23,7 +20,7 @@ tokenizer = postTrainingPreprocessor.tokenizer
 model = BertForPreTraining.from_pretrained(modelName)
 
 #json 데이터 추출
-dataPath = conf["dataset"]["post_training"]["training"]["path"]
+dataPath = conf["dataset"]["post_training"]["test"]["path"]
 dataDom = conf["dataset"]["post_training"]["test"]["struct"].split('/')
 postTrainingPreprocessor.readData(dataPath=dataPath, dataDOM=dataDom)
 train_contexts = postTrainingPreprocessor.getRawData()
@@ -42,48 +39,66 @@ for train_context in train_contexts:
 # 데이터 토크나이징
 token_datas = []
 for refine_data in refine_datas:
-    token_datas.append(postTrainingPreprocessor.masking(tokenizer(refine_data["first"], refine_data["second"], return_tensors="pt")))
-print(token_datas)
+    token_datas.append(postTrainingPreprocessor.masking(
+        tokenizer(refine_data["first"],
+                  refine_data["second"],
+                  add_special_tokens=True,
+                  truncation=True,
+                  max_length=512,
+                  padding="max_length",
+                  return_tensors="pt")
+        ))
 
-# # # verse 8
-# dataset = Dataset.MeditationsDataset(inputs)
-# loader = torch.utils.data.DataLoader(dataset, batch_size=16, shuffle=True)
+for token_data, train_context in zip(token_datas, train_contexts):
+    token_data['next_sentence_label'] = torch.LongTensor([train_context['label']])
 
-# device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-# # and move our model over to the selected device
-# model.to(device)
-# # activate training mode
-# model.train()
+print(token_datas[0].keys())
 
-# # initialize optimizer
-# optim = AdamW(model.parameters(), lr=5e-5)
-# epochs = conf["developments"]["epochs"]
+# # verse 8-
+loader = torch.utils.data.DataLoader(token_datas, batch_size=16, shuffle=True)
 
-# # post-training
-# for epoch in range(epochs):
-#     # setup loop with TQDM and dataloader
-#     loop = tqdm(loader, leave=True)
-#     for batch in loop:
-#         # initialize calculated gradients (from prev step)
-#         optim.zero_grad()
-#         # pull all tensor batches required for training
-#         input_ids = batch['input_ids'].to(device)
-#         attention_mask = batch['attention_mask'].to(device)
-#         labels = batch['labels'].to(device)
-#         # process
-#         outputs = model(input_ids, attention_mask=attention_mask,
-#                         labels=labels)
-#         # extract loss
-#         loss = outputs.loss
-#         # calculate loss for every parameter that needs grad update
-#         loss.backward()
-#         # update parameters
-#         optim.step()
-#         # print relevant info to progress bar
-#         loop.set_description(f'Epoch {epoch}')
-#         loop.set_postfix(loss=loss.item())
+device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+# and move our model over to the selected device
+model.to(device)
+# activate training mode
+model.train()
+
+# initialize optimizer
+optim = AdamW(model.parameters(), lr=5e-5)
+epochs = conf["developments"]["epochs"]
+
+# post-training
+for epoch in range(epochs):
+    # setup loop with TQDM and dataloader
+    loop = tqdm(loader, leave=True)
+    for batch in loop:
+        # initialize calculated gradients (from prev step)
+        optim.zero_grad()
+        # pull all tensor batches required for training
+        input_ids = batch['input_ids'].to(device)
+        token_type_ids = batch['token_type_ids'].to(device)
+        attention_mask = batch['attention_mask'].to(device)
+        next_sentence_label = batch['next_sentence_label'].to(device)
+        labels = batch['label'].to(device)
+        # process
+        outputs = model(input_ids, 
+                    token_type_ids=token_type_ids, 
+                    attention_mask=attention_mask, 
+                    next_sentence_label=next_sentence_label, 
+                    labels=labels)
+        # extract loss
+        loss = outputs.loss
+        # calculate loss for every parameter that needs grad update
+        loss.backward()
+        # update parameters
+        optim.step()
+        # print relevant info to progress bar
+        loop.set_description(f'Epoch {epoch}')
+        loop.set_postfix(loss=loss.item())
 
 #===================================
+
+# model.save_pretrained("saving_folder")
 
 # # verse 14
 # from transformers import pipeline
@@ -106,7 +121,7 @@ print(token_datas)
 # trainer = Trainer(
 #     model=model,
 #     args=args,
-#     train_dataset=dataset
+#     train_dataset=token_datas
 # )
 
 # # verse 17
@@ -117,16 +132,3 @@ print(token_datas)
 
 # unmasker = pipeline('fill-mask', model=modelName)
 # unmasker(sentence)
-
-
-# class PostTraining:
-    
-#     def __init__(self) -> None:
-#         pass
-    
-#     # BERT 모델 불러오기
-#     # 데이터 추출
-#     # 데이터 정제
-#     # masking & tokenizing
-#     # nsp
-#     # training
