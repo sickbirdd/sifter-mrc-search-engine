@@ -178,3 +178,6 @@ datasets/lm_post_training/test/LabeledData
 
 # 임시 테스트 함수
 tests/temp
+
+# 로그
+log.txt

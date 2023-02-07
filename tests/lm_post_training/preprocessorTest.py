@@ -83,7 +83,6 @@ class preProcessorTest(TestCase):
         tokenContext = self.implPreProcessor.tokenizer(sampleContext)
         maskContext = self.implPreProcessor.masking(tokenContext)
         # num = random.randrange(0, len(maskContext))
-        # # print(data_masking[0])
         ratioSum = 0.0
 
         for context in maskContext['input_ids']:
