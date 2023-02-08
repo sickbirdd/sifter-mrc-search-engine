@@ -25,6 +25,8 @@ post_training:
   optim:
     name: AdamW
     lr: 5e-5
+  save:
+    path: modules/lm_post_training/temp_model
 fine_tuning:
   data_path: 'squad_kor_v1'
   train:

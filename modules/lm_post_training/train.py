@@ -115,5 +115,5 @@ for epoch in range(epochs):
         loop.set_postfix(loss=loss.item())
 
 LOGGER.info("훈련이 완료되었습니다.")
-model.save_pretrained(save_directory='modules/lm_post_training/temp_model')
-tokenizer.save_pretrained('modules/lm_post_training/temp_model')
+model.save_pretrained(save_directory=CONFIG['save']['path'])
+tokenizer.save_pretrained(CONFIG['save']['path'])
