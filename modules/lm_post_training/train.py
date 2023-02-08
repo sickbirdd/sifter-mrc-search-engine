@@ -10,51 +10,48 @@ import torch
 from transformers import AdamW
 from tqdm import tqdm  # for our progress bar
 from transformers import BertForPreTraining
-from modules.lm_post_training.dataset import MeditationsDataset as MD
-from modules.lm_post_training.preprocessor import Preprocessor as pp
+from modules.lm_post_training.preprocessor import MeditationsDataset
+from modules.lm_post_training.preprocessor import Preprocessor
 
-modelName = conf["model"]["name"]
-postTrainingPreprocessor = pp(modelName)
+model_name = conf["model"]["name"]
+post_training_preprocessor = Preprocessor(model_name)
 
 # bert 모델 불러오기
-tokenizer = postTrainingPreprocessor.tokenizer
-model = BertForPreTraining.from_pretrained(modelName)
+tokenizer = post_training_preprocessor.tokenizer
+model = BertForPreTraining.from_pretrained(model_name)
 
 #json 데이터 추출
-dataPath = conf["dataset"]["post_training"]["test"]["path"]
-dataDom = conf["dataset"]["post_training"]["test"]["struct"].split('/')
-postTrainingPreprocessor.readData(dataPath=dataPath, dataDOM=dataDom)
-train_contexts = postTrainingPreprocessor.getRawData()
+data_path = conf["dataset"]["post_training"]["training"]["path"]
+data_DOM = conf["dataset"]["post_training"]["training"]["struct"].split('/')
+post_training_preprocessor.read_data(data_path=data_path, data_DOM=data_DOM)
+train_contexts = post_training_preprocessor.get_raw_data()
 
 # NSP
-train_contexts = postTrainingPreprocessor.nextSentencePrediction(size=postTrainingPreprocessor.getContextSize())
+train_contexts = post_training_preprocessor.next_sentence_prediction(5000)
+# size=post_training_preprocessor.get_context_size()
 # size=sys.argv[1]
 
 # 데이터 정제
 refine_datas = [[], [], []]
-step = dict()
 for train_context in train_contexts:
-    
-    refine_datas[0].append(postTrainingPreprocessor.removeSpecialCharacters(train_context["first"]))
-    refine_datas[1].append(postTrainingPreprocessor.removeSpecialCharacters(train_context["second"]))
+    refine_datas[0].append(post_training_preprocessor.remove_special_characters(train_context["first"]))
+    refine_datas[1].append(post_training_preprocessor.remove_special_characters(train_context["second"]))
     refine_datas[2].append(train_context["label"])
 
 # 데이터 토크나이징 & 마스킹
-token_datas = postTrainingPreprocessor.masking(
-                                                tokenizer(refine_datas[0],
-                                                          refine_datas[1],
-                                                          add_special_tokens=True,
-                                                          truncation=True,
-                                                          max_length=512,
-                                                          padding="max_length",
-                                                          return_tensors="pt"
-                                                          )
-                                                )
+token_datas = post_training_preprocessor.masking(tokenizer(refine_datas[0],
+                                                           refine_datas[1],
+                                                           add_special_tokens=True,
+                                                           truncation=True,
+                                                           max_length=512,
+                                                           padding="max_length",
+                                                           return_tensors="pt"
+                                                           ))
 
 token_datas["next_sentence_label"] = torch.LongTensor(refine_datas[2])
 
 # # verse 8-
-loader = torch.utils.data.DataLoader(MD(token_datas), batch_size=16, shuffle=True)
+loader = torch.utils.data.DataLoader(MeditationsDataset(token_datas), batch_size=16, shuffle=True)
 
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 # and move our model over to the selected device
