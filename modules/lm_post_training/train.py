@@ -10,11 +10,11 @@ import torch
 from transformers import AdamW
 from tqdm import tqdm  # for our progress bar
 from transformers import BertForPreTraining
-from modules.lm_post_training.preprocessor import MeditationsDataset as md
-from modules.lm_post_training.preprocessor import Preprocessor as pp
+from modules.lm_post_training.preprocessor import MeditationsDataset
+from modules.lm_post_training.preprocessor import Preprocessor
 
 model_name = conf["model"]["name"]
-post_training_preprocessor = pp(model_name)
+post_training_preprocessor = Preprocessor(model_name)
 
 # bert 모델 불러오기
 tokenizer = post_training_preprocessor.tokenizer
@@ -51,7 +51,7 @@ token_datas = post_training_preprocessor.masking(tokenizer(refine_datas[0],
 token_datas["next_sentence_label"] = torch.LongTensor(refine_datas[2])
 
 # # verse 8-
-loader = torch.utils.data.DataLoader(md(token_datas), batch_size=16, shuffle=True)
+loader = torch.utils.data.DataLoader(MeditationsDataset(token_datas), batch_size=16, shuffle=True)
 
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 # and move our model over to the selected device

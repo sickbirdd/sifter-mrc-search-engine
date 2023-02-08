@@ -13,7 +13,7 @@ sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(os.path.abspath(
 from modules.config.logging import tracker, logging
 
 #NSP 관련 옵션 값을 가진 객체
-class NspMode:
+class NSPMode:
     def __init__(self) -> None:
         # self.max_direct_range = 1
         self.prob = 0.5
@@ -37,7 +37,7 @@ class NspMode:
             return False
 
 # NSP 관련 문장 정제 데이터를 저장하는 객체
-class NspDataset:
+class NSPDataset:
     def __init__(self, vector_type = "Dict") -> None:
         self.__vector_mode = ["Dict", "Set"]
         if not vector_type in self.__vector_mode:
@@ -81,7 +81,7 @@ class Preprocessor:
         self.__data = []
         self.__size = 0
         self.__context_size = 0
-        self.nsp_mode = NspMode()
+        self.nsp_mode = NSPMode()
     
     #데이터만 모두 초기화한다.
     def clear(self):
@@ -206,7 +206,7 @@ class Preprocessor:
     def next_sentence_prediction(self, size):
         result = []
         result_size = 0
-        used_index = NspDataset("Set" if self.nsp_mode.get_strategy() == "soft" else "Dict")
+        used_index = NSPDataset("Set" if self.nsp_mode.get_strategy() == "soft" else "Dict")
         count = 0
         while result_size < size:
             if count == 100000:
