@@ -1,5 +1,5 @@
 developments:
-  epochs: 150
+  epochs: 3
   batch_size: 128
   lr_initial: 0.1
 model:

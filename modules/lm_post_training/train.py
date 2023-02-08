@@ -27,7 +27,7 @@ post_training_preprocessor.read_data(data_path=data_path, data_DOM=data_DOM)
 train_contexts = post_training_preprocessor.get_raw_data()
 
 # NSP
-train_contexts = post_training_preprocessor.next_sentence_prediction(5000)
+train_contexts = post_training_preprocessor.next_sentence_prediction(5)
 # size=post_training_preprocessor.get_context_size()
 # size=sys.argv[1]
 
@@ -92,3 +92,6 @@ for epoch in range(epochs):
         # print relevant info to progress bar
         loop.set_description(f'Epoch {epoch}')
         loop.set_postfix(loss=loss.item())
+
+model.save_pretrained(save_directory='modules/lm_post_training/temp_model')
+tokenizer.save_pretrained('modules/lm_post_training/temp_model')

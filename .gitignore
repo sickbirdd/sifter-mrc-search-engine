@@ -181,3 +181,6 @@ tests/temp
 
 # 로그
 log.txt
+
+# 모델 및 토크나이저 파일
+modules/lm_post_training/temp_model
