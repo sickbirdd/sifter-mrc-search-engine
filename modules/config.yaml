@@ -47,7 +47,7 @@ log:
       format: '%(levelname)s[%(module)s:%(lineno)d]: %(message)s (%(asctime)s)'
       datafmt: '%Y-%m-%d %I:%M:%S %p'
     complex:
-      format: '%(levelname)s[%(module)s]: %(message)s (%(asctime)s) pid:%(process)d pn:%(processName)s tid:%(thread)d tn:%(threadName)s'
+      format: '%(levelname)s[%(module)s]:%(message)s (%(asctime)s) pid:%(process)d pn:%(processName)s tid:%(thread)d tn:%(threadName)s'
       datafmt: '%Y-%m-%d %I:%M:%S %p'
   handlers:
     console:
