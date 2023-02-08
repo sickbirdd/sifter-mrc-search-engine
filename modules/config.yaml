@@ -18,6 +18,15 @@ dataset:
       name: empty
       path: datasets/lm_post_training/test/LabeledData
       struct: named_entity/#/content/#/sentence
+post_training:
+  context_pair_size: 400000
+  max_length: 512
+  batch_size: 16
+  optim:
+    name: AdamW
+    lr: 5e-5
+  save:
+    path: modules/lm_post_training/temp_model
 fine_tuning:
   data_path: 'squad_kor_v1'
   train:
@@ -57,12 +66,14 @@ log:
     file-warning:
       class: logging.FileHandler
       mode: a 
+      encoding: utf-8
       filename: log.txt
       formatter: complex
       level: WARNING
     file-train:
       class: logging.FileHandler
       mode: a 
+      encoding: utf-8
       filename: train.log
       formatter: complex
       level: INFO
