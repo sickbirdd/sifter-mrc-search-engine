@@ -12,7 +12,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))))
 from modules.config.logging import tracker, single_logger,logging
 
-logger = single_logger().getLogger()
+LOGGER = single_logger().getLogger()
 
 #NSP 관련 옵션 값을 가진 객체
 class NSPMode:
@@ -212,7 +212,7 @@ class Preprocessor:
         count = 0
         while result_size < size:
             if count == 100000:
-                logger.warning("문장 생성 실패: 원하는 크기의 문장을 추출하는데 실패하였습니다. Size = " + str(result_size))
+                LOGGER.warning("문장 생성 실패: 원하는 크기의 문장을 추출하는데 실패하였습니다. Size = " + str(result_size))
                 break
             try:
                 # 첫번째 문장: 무작위로 추가
@@ -249,7 +249,7 @@ class Preprocessor:
             except:
                 count = count + 1
         
-        logger.info("실패 시도 개수: " + str(count))
+        LOGGER.info("실패 시도 개수: " + str(count))
         return result
 
     def masking(self, data_tokenizing, ratio=0.15):
