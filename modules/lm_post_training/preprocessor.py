@@ -258,11 +258,9 @@ class Preprocessor:
         mask_token=self.tokenizer.mask_token_id,
         pad_token=self.tokenizer.pad_token_id
         if type(mask_token) is tuple:
-            logger.debug("tuple로 호출되었습니다.")
             mask_token = mask_token[0]
 
         if type(sep_token) is tuple:
-            logger.debug("tuple로 호출되었습니다.")
             sep_token = sep_token[0]
 
         # 마스킹 전 label 키에 id 복사
