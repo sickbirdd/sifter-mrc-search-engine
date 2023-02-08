@@ -1,5 +1,5 @@
 developments:
-  epochs: 150
+  epochs: 3
   batch_size: 128
   lr_initial: 0.1
 model:
@@ -19,7 +19,7 @@ dataset:
       path: datasets/lm_post_training/test/LabeledData
       struct: named_entity/#/content/#/sentence
 post_training:
-  context_pair_size: 500
+  context_pair_size: 400000
   max_length: 512
   batch_size: 16
   optim:

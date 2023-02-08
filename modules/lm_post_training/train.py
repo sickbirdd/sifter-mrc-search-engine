@@ -32,8 +32,8 @@ tokenizer = post_training_preprocessor.tokenizer
 model = BertForPreTraining.from_pretrained(MODEL_NAME)
 
 #json 데이터 추출
-DATA_PATH = conf["dataset"]["post_training"]["test"]["path"]
-DATA_DOM = conf["dataset"]["post_training"]["test"]["struct"].split('/')
+DATA_PATH = conf["dataset"]["post_training"]["training"]["path"]
+DATA_DOM = conf["dataset"]["post_training"]["training"]["struct"].split('/')
 post_training_preprocessor.read_data(data_path=DATA_PATH, data_DOM=DATA_DOM)
 
 LOGGER.info("추출된 기사 개수: " + str(post_training_preprocessor.get_size()))
@@ -113,3 +113,7 @@ for epoch in range(epochs):
         # print relevant info to progress bar
         loop.set_description(f'Epoch {epoch}')
         loop.set_postfix(loss=loss.item())
+
+LOGGER.info("훈련이 완료되었습니다.")
+model.save_pretrained(save_directory='modules/lm_post_training/temp_model')
+tokenizer.save_pretrained('modules/lm_post_training/temp_model')
