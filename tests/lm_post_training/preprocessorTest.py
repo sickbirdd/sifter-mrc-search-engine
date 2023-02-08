@@ -173,7 +173,5 @@ class preProcessorTest(TestCase):
         
         # self.assertEqual(testSize, len(nspResult))
 
-
-        
 if __name__ == '__main__':
     main()
