@@ -1,4 +1,5 @@
 import logging
+from logging import Logger
 import logging.config
 import yaml
 with open('modules/config.yaml') as f:
@@ -8,8 +9,25 @@ with open('modules/config.yaml') as f:
 config = conf["log"]
 logging.config.dictConfig(config)
 
-test_logger = logging.getLogger('test')
+class single_logger:
+    def __new__(cls, *args, **kwargs):
+        if not hasattr(cls, "_instance"):
+            cls._instance = super().__new__(cls)
+        return cls._instance
+    
+    def __init__(self) -> None:
+        cls = type(self)
+        if not hasattr(cls, "_init"):
+            self.__logger = logging.getLogger()
+            cls._init = True
 
+    def getLogger(self) -> Logger:
+        return self.__logger
+
+    def setLogger(self, logger_name):
+        self.__logger = logging.getLogger(logger_name)
+
+test_logger = logging.getLogger('test')
 # 인스턴스 진입 트래커: 인스턴스 진입 시 해당 사실을 출력한다.
 def tracker(func, *args, **kwargs):
     def new_func(*args, **kwargs):  

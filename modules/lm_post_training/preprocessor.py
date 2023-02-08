@@ -10,7 +10,9 @@ from transformers import AutoTokenizer
 import os
 import sys
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))))
-from modules.config.logging import tracker, logging
+from modules.config.logging import tracker, single_logger,logging
+
+logger = single_logger().getLogger()
 
 #NSP 관련 옵션 값을 가진 객체
 class NSPMode:
@@ -210,7 +212,7 @@ class Preprocessor:
         count = 0
         while result_size < size:
             if count == 100000:
-                logging.info("문장 생성 실패: 원하는 크기의 문장을 추출하는데 실패하였습니다. Size = " + str(result_size))
+                logger.warning("문장 생성 실패: 원하는 크기의 문장을 추출하는데 실패하였습니다. Size = " + str(result_size))
                 break
             try:
                 # 첫번째 문장: 무작위로 추가
@@ -247,7 +249,7 @@ class Preprocessor:
             except:
                 count = count + 1
         
-        logging.info("실패 시도 개수: " + str(count))
+        logger.info("실패 시도 개수: " + str(count))
         return result
 
     def masking(self, data_tokenizing, ratio=0.15):
@@ -256,15 +258,15 @@ class Preprocessor:
         mask_token=self.tokenizer.mask_token_id,
         pad_token=self.tokenizer.pad_token_id
         if type(mask_token) is tuple:
-            logging.debug("tuple로 호출되었습니다.")
+            logger.debug("tuple로 호출되었습니다.")
             mask_token = mask_token[0]
 
         if type(sep_token) is tuple:
-            logging.debug("tuple로 호출되었습니다.")
+            logger.debug("tuple로 호출되었습니다.")
             sep_token = sep_token[0]
 
         # 마스킹 전 label 키에 id 복사
-        data_tokenizing['label'] = copy.deepcopy(data_tokenizing['input_ids'])
+        data_tokenizing['labels'] = copy.deepcopy(data_tokenizing['input_ids'])
         # 마스킹 전 label 키에 id 복사
         # data["label"] = data["input_ids"]
         # 마스킹 . 기사 하나씩
