@@ -1,12 +1,15 @@
 import os
 import sys
 import yaml
+import logging
+from modules.config.logging import Test
 
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))))
 
 from modules.lm_post_training.preprocessor import Preprocessor as pp
 from unittest import TestCase, main
-from modules.config.logging import Test, logging
+
+logger = logging.getLogger('test')
 
 class preProcessorTest(TestCase):
     
@@ -21,22 +24,22 @@ class preProcessorTest(TestCase):
         self.dataPath = conf["dataset"]["post_training"]["test"]["path"]
         self.dataDom = conf["dataset"]["post_training"]["test"]["struct"].split('/')
         
-        logging.info("1:---최초 생성 테스트---")
+        logger.debug("1:---최초 생성 테스트---")
         assert self.implPreProcessor.getSize() == 0
         assert self.implPreProcessor.getRawData() == []
-        logging.info("1:---최초 생성 테스트 완료---")
-        logging.info("2:---샘플 데이터 입력 테스트---")
+        logger.debug("1:---최초 생성 테스트 완료---")
+        logger.debug("2:---샘플 데이터 입력 테스트---")
         
         self.implPreProcessor.readData(dataPath=self.dataPath, dataDOM=self.dataDom)
         assert self.implPreProcessor.getSize != 0
         assert self.implPreProcessor.getRawData() != []
         assert len(self.implPreProcessor.getRawData()) == self.implPreProcessor.getSize()
         
-        logging.info("현재 분류된 기사 개수: " + str(self.implPreProcessor.getSize()))
-        logging.info("현재 분류된 문장 개수: " + str(self.implPreProcessor.getContextSize()))
-        logging.info(self.implPreProcessor.getRawData()[0])
+        logger.info("현재 분류된 기사 개수: " + str(self.implPreProcessor.getSize()))
+        logger.info("현재 분류된 문장 개수: " + str(self.implPreProcessor.getContextSize()))
+        logger.info(self.implPreProcessor.getRawData()[0])
         
-        logging.info("2:---샘플 데이터 입력 테스트 완료---")
+        logger.debug("2:---샘플 데이터 입력 테스트 완료---")
         
     # 클래스 소멸시 한번만 실행
     @classmethod
@@ -58,12 +61,12 @@ class preProcessorTest(TestCase):
         self.assertEqual(clean_dataset, test_answer)
 
     # def test_tokenize(self):
-    #     print("tokenize testing......")
+    #     logger.info("tokenize testing......")
     #     # 데이터 불러오고 토크나이즈
     #     data_getToken = self.implPreProcessor.getTokenData()
     #     data_tokenize = self.implPreProcessor.tokenize(data_getToken)
     #     num = random.randrange(0, len(data_tokenize))
-    #     # print(data_tokenize[num])
+    #     # logger.info(data_tokenize[num])
     #     # 처음과 마지막에 cls, sep 토큰 있는지 검사
     #     assert data_tokenize[num]["input_ids"][0] == 2, "기사 맨 앞에 cls 토큰 없음"
     #     for i in range(-1, -len(data_tokenize[num]["input_ids"]) - 1, -1):
@@ -82,7 +85,6 @@ class preProcessorTest(TestCase):
         sampleContext = self.implPreProcessor.getRawData()[0]
         tokenContext = self.implPreProcessor.tokenizer(sampleContext)
         maskContext = self.implPreProcessor.masking(tokenContext)
-        # num = random.randrange(0, len(maskContext))
         ratioSum = 0.0
 
         for context in maskContext['input_ids']:
@@ -90,14 +92,14 @@ class preProcessorTest(TestCase):
             num_pad = context.count(self.implPreProcessor.tokenizer.pad_token_id)
             ratio_mask = num_mask / (len(context) - num_pad)
             ratioSum += ratio_mask
-            logging.info(f"ratio of mask_token : {ratio_mask}")
+            logger.debug(f"ratio of mask_token : {ratio_mask}")
         
         assert 0.08 < ratioSum / len(maskContext['input_ids']) < 0.15, "마스킹 비율 이상. 확인 필요"
 
     @Test("NSP(다음 문장 예측)")
     def test_next_sentence_prediction(self):
         if self.implPreProcessor.getSize() == self.implPreProcessor.getContextSize():
-            logging.warning('NSP 예측에 사용할 수 없는 데이터셋입니다.')
+            logger.info('NSP 예측에 사용할 수 없는 데이터셋입니다.')
             return
 
         contextSize = self.implPreProcessor.getContextSize()
@@ -131,7 +133,7 @@ class preProcessorTest(TestCase):
                 nextPredict = nextPredict + 1
             else:
                 negPredict = negPredict + 1
-        logging.info("긍정 문장" + str(nextPredict) + ", 부정 문장" + str(negPredict))
+        logger.info("긍정 문장: " + str(nextPredict) + ", 부정 문장: " + str(negPredict))
         self.assertEqual(nextPredict + negPredict, testSize)
         self.assertTrue(negPredict > testSize / 10 and nextPredict > testSize / 10)
 

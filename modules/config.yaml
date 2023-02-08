@@ -41,24 +41,9 @@ fine_tuning:
   login_token: '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'
   exec: 'eval'
 log:
-  formatters:
-    default:
-      format: '%(levelname)s[%(module)s]: %(message)s (%(asctime)s)'
-    test:
-      foramt: '%(levelname)s[%(module)s]: %(message)s'
-  handlers:
-    root:
-      class: logging.StreamHandler
-      level: DEBUG
-      formatter: default
-      stream: "ext://sys.stdout"
-    file:
-      class: logging.FileHandler
-      level: WARNING
-      formatter: default
-      filename: log.txt
-    test:
-      class: logging.StreamHanlder
-      level: DEBUG
-      formatter: default
-      stream: "ext://sys.stdout"
+  default:
+    format: '%(levelname)s[%(module)s:%(lineno)d]: %(message)s (%(asctime)s)'
+    level: DEBUG
+  file:
+    format: '%(levelname)s[%(module)s]: %(message)s (%(asctime)s) pid:%(process)d pn:%(processName)s tid:%(thread)d tn:%(threadName)s'
+    level: WARNING
