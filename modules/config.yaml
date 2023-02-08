@@ -41,24 +41,53 @@ fine_tuning:
   login_token: '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'
   exec: 'eval'
 log:
+  version: 1
   formatters:
     default:
-      format: '%(levelname)s[%(module)s]: %(message)s (%(asctime)s)'
-    test:
-      foramt: '%(levelname)s[%(module)s]: %(message)s'
+      format: '%(levelname)s[%(module)s:%(lineno)d]: %(message)s (%(asctime)s)'
+      datafmt: '%Y-%m-%d %I:%M:%S %p'
+    complex:
+      format: '%(levelname)s[%(module)s]:%(message)s (%(asctime)s) pid:%(process)d pn:%(processName)s tid:%(thread)d tn:%(threadName)s'
+      datafmt: '%Y-%m-%d %I:%M:%S %p'
   handlers:
-    root:
+    console:
       class: logging.StreamHandler
-      level: DEBUG
       formatter: default
-      stream: "ext://sys.stdout"
-    file:
+      level: DEBUG
+    file-warning:
       class: logging.FileHandler
-      level: WARNING
-      formatter: default
+      mode: a 
       filename: log.txt
-    test:
-      class: logging.StreamHanlder
+      formatter: complex
+      level: WARNING
+    file-train:
+      class: logging.FileHandler
+      mode: a 
+      filename: train.log
+      formatter: complex
+      level: INFO
+  root: 
+    handlers:
+      - console
+      - file-warning
+    level: WARNING
+  loggers:
+    only_print:
+      handlers:
+        - console
       level: DEBUG
-      formatter: default
-      stream: "ext://sys.stdout"
+      propagate: False
+    train:
+      handlers: 
+       - file-train
+      level: INFO
+      propagate: False
+    test:
+      handlers:
+        - console
+      level: DEBUG
+      propagate: False
+
+  
+
+    
