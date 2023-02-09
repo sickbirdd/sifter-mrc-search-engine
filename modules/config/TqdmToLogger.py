@@ -2,10 +2,11 @@ import logging
 import io
 
 class TqdmToLogger(io.StringIO):
-    """
-        : TQDM 출력 Stream을 logger로 변환하는 class
-        Output stream for TQDM which will output to logger module instead of
-        the StdOut.
+    """TQDM 출력 Stream을 logger로 전달하는 class
+    
+    Attributes:
+        logger (:class:`logging.Logger`): 전달하고자 하는 logger
+        level (:class:`logging.LEVEL`): 전달하고자 하는 log level
     """
     logger = None
     level = None

@@ -6,7 +6,10 @@ sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(os.path.abspath(
 
 from modules.lm_post_training.preprocessor import Preprocessor
 from unittest import TestCase, main
-from modules.config.logging import Test, logging
+from modules.config.logging import Test, logging, setUp
+
+setUp()
+LOGGER = logging.getLogger('test')
 
 class PreprocessorTest(TestCase):
     
@@ -16,27 +19,28 @@ class PreprocessorTest(TestCase):
         # 설정 파일 만들어지면 관련 변수로 대체할 것
         with open('modules/config.yaml') as f:
             conf = yaml.safe_load(f)
+        
         self.model_name = conf["model"]["name"]
         self.impl_preprocessor  = Preprocessor(self.model_name)
         self.data_path = conf["dataset"]["post_training"]["test"]["path"]
         self.data_DOM = conf["dataset"]["post_training"]["test"]["struct"].split('/')
         
-        logging.info("1:---최초 생성 테스트---")
+        LOGGER.info("1:---최초 생성 테스트---")
         assert self.impl_preprocessor.get_size() == 0
         assert self.impl_preprocessor.get_raw_data() == []
-        logging.info("1:---최초 생성 테스트 완료---")
-        logging.info("2:---샘플 데이터 입력 테스트---")
+        LOGGER.info("1:---최초 생성 테스트 완료---")
+        LOGGER.info("2:---샘플 데이터 입력 테스트---")
         
         self.impl_preprocessor.read_data(data_path=self.data_path, data_DOM=self.data_DOM)
         assert self.impl_preprocessor.get_size != 0
         assert self.impl_preprocessor.get_raw_data() != []
         assert len(self.impl_preprocessor.get_raw_data()) == self.impl_preprocessor.get_size()
         
-        logging.info("현재 분류된 기사 개수: " + str(self.impl_preprocessor.get_size()))
-        logging.info("현재 분류된 문장 개수: " + str(self.impl_preprocessor.get_context_size()))
-        logging.info(self.impl_preprocessor.get_raw_data()[0])
+        LOGGER.info("현재 분류된 기사 개수: " + str(self.impl_preprocessor.get_size()))
+        LOGGER.info("현재 분류된 문장 개수: " + str(self.impl_preprocessor.get_context_size()))
+        LOGGER.info(self.impl_preprocessor.get_raw_data()[0])
         
-        logging.info("2:---샘플 데이터 입력 테스트 완료---")
+        LOGGER.info("2:---샘플 데이터 입력 테스트 완료---")
         
     # 클래스 소멸시 한번만 실행
     @classmethod
@@ -70,14 +74,14 @@ class PreprocessorTest(TestCase):
             num_pad = context.count(self.impl_preprocessor.tokenizer.pad_token_id)
             ratio_mask = num_mask / (len(context) - num_pad)
             ratio_sum += ratio_mask
-            logging.info(f"ratio of mask_token : {ratio_mask}")
+            LOGGER.info(f"ratio of mask_token : {ratio_mask}")
         
         assert 0.08 < ratio_sum / len(mask_context['input_ids']) < 0.15, "마스킹 비율 이상. 확인 필요"
 
     @Test("NSP(다음 문장 예측)")
     def test_next_sentence_prediction(self):
         if self.impl_preprocessor.get_size() == self.impl_preprocessor.get_context_size():
-            logging.warning('NSP 예측에 사용할 수 없는 데이터셋입니다.')
+            LOGGER.warning('NSP 예측에 사용할 수 없는 데이터셋입니다.')
             return
 
         context_size = self.impl_preprocessor.get_context_size()
@@ -111,7 +115,7 @@ class PreprocessorTest(TestCase):
                 next_predict = next_predict + 1
             else:
                 neg_predict = neg_predict + 1
-        logging.info("긍정 문장" + str(next_predict) + ", 부정 문장" + str(neg_predict))
+        LOGGER.info("긍정 문장: " + str(next_predict) + ", 부정 문장: " + str(neg_predict))
         self.assertEqual(next_predict + neg_predict, test_size)
         self.assertTrue(neg_predict > test_size / 10 and next_predict > test_size / 10)
 

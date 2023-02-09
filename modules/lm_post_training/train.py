@@ -6,7 +6,7 @@ import yaml
 
 
     
-from modules.config.logging import single_logger, logging
+from modules.config.logging import SingleLogger, logging
 from modules.config.TqdmToLogger import TqdmToLogger
 import torch
 from transformers import AdamW
@@ -20,8 +20,8 @@ from modules.lm_post_training.preprocessor import Preprocessor
 if __name__ == '__main__':
     with open('modules/config.yaml') as f:
         conf = yaml.safe_load(f)
-    single_logger().setLogger('train')
-    LOGGER = single_logger().getLogger()
+    SingleLogger().setLogger('train')
+    LOGGER = SingleLogger().getLogger()
 
     LOGGER.info('================== NEW TASK ======================')
 
