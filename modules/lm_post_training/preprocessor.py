@@ -206,6 +206,16 @@ class Preprocessor:
     # param size: 문장 크기
     # sepToken: 문장 구분 크기
     def next_sentence_prediction(self, size):
+        """ 다음 문장 예측 문장 쌍 생성
+
+        사전 학습을 위한 다음 문장 예측에 사용할 문장 쌍과 그 관계를 가진 데이터셋을 만들어 주는 함수
+
+        Args:
+            size (int): 원하는 문장 쌍 개수
+        
+        Returns:
+            Dict("first":list(), "second":list(), "label":boolean) : 문장쌍 레이블
+        """
         result = []
         result_size = 0
         used_index = NSPDataset("Set" if self.nsp_mode.get_strategy() == "soft" else "Dict")
