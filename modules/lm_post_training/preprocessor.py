@@ -64,16 +64,7 @@ class NSPDataset:
     
     def remove_list(self, index, stn_index):
         if index in self.__list and stn_index in self.__list[index]:
-            self.__list[index].remove(stn_index)
-            
-# 전처리 데이터 셋 처리 객체
-class MeditationsDataset(torch.utils.data.Dataset):
-    def __init__(self, encodings):
-        self.encodings = encodings
-    def __getitem__(self, idx):
-        return {key: torch.tensor(val[idx]) for key, val in self.encodings.items()}
-    def __len__(self):
-        return len(self.encodings.input_ids)            
+            self.__list[index].remove(stn_index)      
 
 # 전처리 처리 객체
 class Preprocessor: 

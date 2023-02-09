@@ -13,7 +13,7 @@ from transformers import AdamW
 from tqdm import tqdm
 from transformers import BertForPreTraining
 from torch.utils.data import DataLoader
-from modules.lm_post_training.preprocessor import MeditationsDataset
+from dataset import MeditationsDataset
 from modules.lm_post_training.preprocessor import Preprocessor
 
 
