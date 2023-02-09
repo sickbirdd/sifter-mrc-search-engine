@@ -123,7 +123,6 @@ class NSPDataset:
         if index in self.__list and stn_index in self.__list[index]:
             self.__list[index].remove(stn_index)      
 
-# 전처리 처리 객체
 class Preprocessor: 
     """전처리를 담당하는 객체이다.
 
@@ -268,9 +267,6 @@ class Preprocessor:
             sentence = method(sentence)
         return sentence
     
-    # 무작위 문장을 반환한다.
-    # param exceptionIndex: 선택 제외목록
-    # param permitFInal: 각 원문중 마지막 문장 선택 여부
     def __get_random_sentence(self, except_index, size = 1):
         """ 무작위 문장 선별: NSP sub function
 
@@ -308,9 +304,6 @@ class Preprocessor:
     
         raise Exception("랜덤 문장 생성 실패: 시도 초과")
 
-    # 사전 학습을 통해 Bert 성능을 향상시키기 위한 다음 문장 예측 기능을 수행하는 모듈
-    # param size: 문장 크기
-    # sepToken: 문장 구분 크기
     def next_sentence_prediction(self, size) -> dict:
         """ 다음 문장 예측 문장 쌍 생성
 
