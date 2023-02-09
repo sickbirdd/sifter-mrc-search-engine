@@ -10,12 +10,18 @@ from transformers import AutoTokenizer
 import os
 import sys
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))))
-from modules.config.logging import tracker, single_logger,logging
+from modules.config.logging import SingleLogger
 
-LOGGER = single_logger().getLogger()
+LOGGER = SingleLogger().getLogger()
 
-#NSP 관련 옵션 값을 가진 객체
 class NSPMode:
+    """ 다음 문장 예측 설정
+
+    :class:`modules.lm_post_training_Preprocessor` 에서 사전 학습을 위한 다음 문장 예측에 관한 설정을 담은 Value Object
+
+    Args:
+        prob (double): 올바른 다음 문장 설정 확률
+    """
     def __init__(self) -> None:
         # self.max_direct_range = 1
         self.prob = 0.5
@@ -26,20 +32,44 @@ class NSPMode:
         self.__strategy = "no_dupplicate"
 
     def get_strategy_list(self):
+        """ 현재 가능한 생성 전략 리스트를 반환한다.
+        
+        Returns:
+            list: 생성 전략 리스트
+        """
         return self.__strageList
 
     def get_strategy(self):
+        """ 현재 생성 전략을 반환한다.
+
+        Returns:
+            String: 현재 생성 전략
+        """
         return self.__strategy
 
     def set_strategy(self, strategy):
+        """ 생성 전략을 설정한다.
+
+        Args:
+            strategy (String): 새로운 생성 전략 (no_dupplicate or only_first or soft)
+        
+        Returns:
+            boolean: 성공 시 `True`, 실패 시 `False`
+        """
         if strategy in self.__strage_list:
             self.__strategy = strategy
             return True
         else:
             return False
 
-# NSP 관련 문장 정제 데이터를 저장하는 객체
 class NSPDataset:
+    """ 다음 문장 예측 설정
+
+    :class:`modules.lm_post_training_Preprocessor` 에서 사전 학습을 위한 다음 문장 예측중 사용한 값을 담는 데이터 구조이다.
+
+    Attributes:
+        vector_type(string): 내부 데이터 구조   
+    """
     def __init__(self, vector_type = "Dict") -> None:
         self.__vector_mode = ["Dict", "Set"]
         if not vector_type in self.__vector_mode:
@@ -49,26 +79,72 @@ class NSPDataset:
         self.__list = dict() if vector_type == "Dict" else set()
     
     def is_used(self, index, stn_index, index_s = "", stn_index_s = ""):
+        """ 사용 여부 검사
+
+        이미 사용한 값인지 검사한다.
+
+        Returns:
+            boolean: 사용한 경우 `True` 아닐 경우 `False`
+        """
         if self.vector_type == "Dict":
             return index in self.__list and (stn_index in self.__list[index] or "*" in self.__list[index])
         elif self.vector_type == "Set":
             return [index, stn_index, index_s, stn_index_s] in self.__list
 
     def add_list(self, index, stn_index):
+        """ 사용한 값 저장
+        
+        Args:
+            index (int): 기사 id
+            stn_index (int): 문장 id
+        """
         if not index in self.__list:
             self.__list[index] = set()
         self.__list[index].add(stn_index)
 
     def add_set(self, index_f, stn_index_f, index_s, stn_index_s):
+        """ 사용한 값 저장
+
+        Args:
+            index_f (int): 기사1 id
+            stn_index_f (int): 문장1 id
+            index_s (int): 기사2 id
+            stn_index_s (int): 문장2 id
+        """
         self.__list.add([index_f, stn_index_f, index_s, stn_index_s])
     
     def remove_list(self, index, stn_index):
+        """ 사용한 값 삭제
+        
+        Args:
+            index (int): 기사 id
+            stn_index (int): 문장 id
+        """
         if index in self.__list and stn_index in self.__list[index]:
             self.__list[index].remove(stn_index)      
 
-# 전처리 처리 객체
-@tracker
-class Preprocessor:
+class Preprocessor: 
+    """전처리를 담당하는 객체이다.
+
+    Bert 전처리에 필요한 Masking, Next Sentence Predict(NSP)를 포함하고, 데이터 정제(특수문자 제거, 불용어 제거 등) 기능을 수행할 수 있습니다.
+
+    Attributes:
+        tokenizer (:class:`AutoTokenizer`): 전처리시 사용할 토크나이저를 저장한다.
+        nsp_mode(:class:`NSPMode`): NSP 관련 설정 정보를 보유하고 있는 Value Object
+
+    .. note::
+        modelname = 'bert-base-uncased'
+
+        preprocessor = Preprocessor(modelname)
+
+        data_DOM = ["dataset", "#", "content", "#", "sentence"]
+        
+        preprocessor.read_data("dataset/train", data_DOM)
+
+        print(preprocessor.get_size()) # 추출된 개수 출력
+
+        print(preprocessor.get_context_size()) # 추출된 문장 출력
+    """
     def __init__(self, model_name) -> None:
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.__data = []
@@ -78,22 +154,49 @@ class Preprocessor:
     
     #데이터만 모두 초기화한다.
     def clear(self):
+        """ 전처리 객채에 저장된 데이터 모두 삭제한다."""
         self.__data = []
         self.__size = 0
         self.__context_size = 0
 
     def get_raw_data(self):
+        """ 전처리 객채에 저장된 데이터를 반환한다.
+        
+        Returns:
+            list: 2차원 데이터 리스트 ex) [기사:[문장1, 문장2, ...], ...]
+        """
         return self.__data
 
     def get_size(self):
+        """ 전처리 객채에 저장된 기사 개수를 반환한다.
+        
+        Returns:
+            int: 기사 개수
+        """
         return self.__size
     
     def get_context_size(self):
+        """ 전처리 객채에 저장된 문장 개수를 반환한다.
+
+        Returns:
+            int: 문장 개수
+        """
         return self.__context_size
     
-    # 기사 하나씩 append   
     def __context_finder(self, context_dict_and_list, data_DOM, deep):
-        # TODO: data가 그냥 원문일 시 처리 -> type을 인자로 추가
+        """ Dict과 List로 이루어진 데이터 구조에서 특정 값 찾기
+
+        JSON을 포함한 Dict과 List로 이루어진 구조체에서 찾길 원하는 데이터 위치를 받아 해당 데이터를 리스트로 반환해 주는 내부
+        .. warning:: 3차원 이상 구조체에서는 다른 전처리기 함수와 호환되지 않는다.
+        
+        Args:
+            context_dict_and_list (dict): 원본 데이터 구조체
+            data_DOM (list): 찾고자 하는 위치 - ex) ["root", "child1", "#", "child2", "target"] "#"은 리스트를 의미한다.
+            deep (int): 단순한 1차 리스트를 내부 형식 구조에 맞게 맞추기 위한 깊이
+
+        Returns:
+            list: 2차원 이상 값 리스트
+        """
         if len(data_DOM) == 0:
             return 1, context_dict_and_list if deep == 0 else [context_dict_and_list]
         
@@ -164,10 +267,18 @@ class Preprocessor:
             sentence = method(sentence)
         return sentence
     
-    # 무작위 문장을 반환한다.
-    # param exceptionIndex: 선택 제외목록
-    # param permitFInal: 각 원문중 마지막 문장 선택 여부
     def __get_random_sentence(self, except_index, size = 1):
+        """ 무작위 문장 선별: NSP sub function
+
+        내부 데이터 구조에서 무작위 문장을 선별한다. NSPused 객체를 사용하며 이미 사용한 특정 셋에 대해서는 선별하지 않는다.
+
+        Args:
+            except_index (NSPused): 선별 배제 리스트
+            size (int): 찾고자 하는 다음 문장 개수
+
+        Returns:
+            tuple(int, int): 해당 기사 index와 해당 기사의 문장 index를 반환한다.
+        """
         cnt = 0
         while cnt < 1000:
             cnt = cnt + 1
@@ -193,10 +304,17 @@ class Preprocessor:
     
         raise Exception("랜덤 문장 생성 실패: 시도 초과")
 
-    # 사전 학습을 통해 Bert 성능을 향상시키기 위한 다음 문장 예측 기능을 수행하는 모듈
-    # param size: 문장 크기
-    # sepToken: 문장 구분 크기
-    def next_sentence_prediction(self, size):
+    def next_sentence_prediction(self, size) -> dict:
+        """ 다음 문장 예측 문장 쌍 생성
+
+        사전 학습을 위한 다음 문장 예측에 사용할 문장 쌍과 그 관계를 가진 데이터셋을 만들어 주는 함수
+
+        Args:
+            size (int): 원하는 문장 쌍 개수
+        
+        Returns:
+            dict: 다음 문장 예측 문장 쌍 - ex) {["first": sentence1, "second": sentence2, "label": True], ...}
+        """
         result = []
         result_size = 0
         used_index = NSPDataset("Set" if self.nsp_mode.get_strategy() == "soft" else "Dict")
