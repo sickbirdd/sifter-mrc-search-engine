@@ -1,0 +1,14 @@
+parameters:
+  epochs: 3
+  context_pair_size: 400000
+  max_length: 512
+  batch_size: 16
+  optimizer:
+    name: AdamW
+    lr: 5e-5
+  upload: modules/lm_post_training/temp_model
+  model:
+    name: klue/bert-base
+dataset:
+  path: datasets/lm_post_training/training/LabeledData
+  struct: named_entity/#/content/#/sentence
