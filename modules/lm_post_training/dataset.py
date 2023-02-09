@@ -1,6 +1,7 @@
 import torch
 
 class MeditationsDataset(torch.utils.data.Dataset):
+    """An example docstring for a class definition."""
     def __init__(self, encodings):
         self.encodings = encodings
     def __getitem__(self, idx):

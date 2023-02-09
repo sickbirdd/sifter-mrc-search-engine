@@ -10,7 +10,7 @@ from transformers import AutoTokenizer
 import os
 import sys
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))))
-from modules.config.logging import tracker, single_logger,logging
+from modules.config.logging import single_logger
 
 LOGGER = single_logger().getLogger()
 
@@ -76,8 +76,8 @@ class MeditationsDataset(torch.utils.data.Dataset):
         return len(self.encodings.input_ids)            
 
 # 전처리 처리 객체
-@tracker
-class Preprocessor:
+class Preprocessor: 
+    """전처리 객체 설명"""
     def __init__(self, model_name) -> None:
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.__data = []

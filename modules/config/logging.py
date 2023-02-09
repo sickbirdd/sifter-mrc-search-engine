@@ -1,13 +1,14 @@
 import logging
-from logging import Logger
 import logging.config
 import yaml
-with open('modules/config.yaml') as f:
-    conf = yaml.safe_load(f)
 
-# logging 설정 (config['log'] 참고)
-config = conf["log"]
-logging.config.dictConfig(config)
+if __name__ == '__main__':
+    with open('modules/config.yaml') as f:
+        conf = yaml.safe_load(f)
+
+    # logging 설정 (config['log'] 참고)
+    config = conf["log"]
+    logging.config.dictConfig(config)
 
 class single_logger:
     """
@@ -25,7 +26,7 @@ class single_logger:
             self.__logger = logging.getLogger()
             cls._init = True
 
-    def getLogger(self) -> Logger:
+    def getLogger(self) -> logging.Logger:
         return self.__logger
 
     def setLogger(self, logger_name):
