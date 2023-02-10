@@ -4,7 +4,6 @@ sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(os.path.abspath(
 
 from transformers import TrainingArguments, Trainer, AutoModelForQuestionAnswering
 from datasets import load_dataset
-from modules.loader import conf_ft as CONF
 from modules.mrc_fine_tuning.preprocessor import Preprocessor
 from modules.mrc_fine_tuning.evaluator import Evaluator
 
@@ -15,9 +14,10 @@ class FineTuning:
         preprocessor (`Preprocessor`): ??
         evaluation (`Evaluator`): ??
     """
-    def __init__(self) -> None:
-        self.preprocessor = Preprocessor(conf=CONF, mode=CONF['parameters']['exec'])
-        self.evaluation = Evaluator(conf=CONF['parameters'])
+    def __init__(self, CONF) -> None:
+        self.CONF = CONF
+        self.preprocessor = Preprocessor(conf=self.CONF, mode=self.CONF['parameters']['exec'])
+        self.evaluation = Evaluator(conf=self.CONF['parameters'])
 
     def __get_dataset(self, dataset):
         """데이터 셋이 이미 있는 경우 해당 데이터셋을 반환 아닌 경우 데이터셋을 정제해서 저장
@@ -44,7 +44,7 @@ class FineTuning:
         """데이터 셋이 없으면 저장"""
         cls = type(self)
         if not hasattr(cls, "self.__mrc_dataset"):
-            self.__mrc_dataset = load_dataset(CONF['dataset']['training_path'])
+            self.__mrc_dataset = load_dataset(self.CONF['dataset']['training_path'])
 
 
     def fine_tuning_trainer(self, mode):
@@ -60,24 +60,24 @@ class FineTuning:
             # 훈련 및 평가 동시 진행
             # 모델을 저장하려면 push_to_hub = True와 로그인을 위한 개인 토큰 필요
             args = TrainingArguments(
-                CONF['model']['upload'],
+                self.CONF['model']['upload'],
                 evaluation_strategy="no",
                 save_strategy="epoch",
-                per_device_train_batch_size=CONF['parameters']['train_batch'],
-                per_device_eval_batch_size=CONF['parameters']['eval_batch'],
-                learning_rate=CONF['parameters']['learning_rate'],
-                num_train_epochs=CONF['parameters']['epochs'],
-                weight_decay=CONF['parameters']['weight_decay'],
-                fp16=CONF['parameters']['fp16'],
-                push_to_hub=CONF['parameters']['push_to_hub'],
+                per_device_train_batch_size=self.CONF['parameters']['train_batch'],
+                per_device_eval_batch_size=self.CONF['parameters']['eval_batch'],
+                learning_rate=self.CONF['parameters']['learning_rate'],
+                num_train_epochs=self.CONF['parameters']['epochs'],
+                weight_decay=self.CONF['parameters']['weight_decay'],
+                fp16=self.CONF['parameters']['fp16'],
+                push_to_hub=self.CONF['parameters']['push_to_hub'],
             )
         else:
             args = TrainingArguments(
-                CONF['model']['upload'],
+                self.CONF['model']['upload'],
                 overwrite_output_dir = True,
                 do_train = False,
                 do_predict = True,
-                per_device_eval_batch_size = CONF['parameters']['eval_batch']
+                per_device_eval_batch_size = self.CONF['parameters']['eval_batch']
             )
 
         trainer = Trainer(

@@ -1,6 +1,5 @@
 import logging
 import logging.config
-from modules.loader import conf_log as CONF
 
 class SingleLogger:
     """ 프로세스상 유일한 logger를 공유하여 사용하기 위한 객체"""

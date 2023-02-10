@@ -4,7 +4,7 @@ sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(os.path.abspath(
 
 from transformers import TrainingArguments, Trainer
 from datasets import load_dataset
-from modules.loader import conf_ft as CONF
+from modules.main import CONF_FT as CONF # 안쓰는 파일이라 안고침
 from modules.mrc_fine_tuning.preprocessor import Preprocessor
 from modules.mrc_fine_tuning.evaluator import Evaluator
 
