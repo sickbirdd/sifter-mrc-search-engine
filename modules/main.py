@@ -3,6 +3,7 @@ from mrc_fine_tuning.train_futher_release import FineTuning
 import sys
 import logging
 from loader import conf_log as CONFIG_LOG
+from config.logging import SingleLogger
 
 if __name__ == '__main__':
     print("Main Module Execute")
