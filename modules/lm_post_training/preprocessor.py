@@ -212,13 +212,7 @@ class Preprocessor:
             return self.__context_finder(context_dict_and_list.get(data_DOM[0]), data_DOM[1:], deep)
             
     def read_data(self, data_path, data_DOM, data_format = ".json"):
-        """훈련할 데이터 셋을 읽어온다
-
-        Args:
-            data_path (str): 훈련할 데이터가 있는 폴더의 경로
-            data_DOM (str): 데이터 셋의 문서 구조
-            data_format (str, optional): 데이터 셋의 확장자. 디폴트 값은 ".json".
-        """
+        
         data_path = Path(data_path)
         
         for (root, _, files) in os.walk(data_path):
