@@ -8,23 +8,26 @@ from modules.loader import conf_ft as CONF
 from modules.mrc_fine_tuning.preprocessor import Preprocessor
 from modules.mrc_fine_tuning.evaluator import Evaluator
 
-fine_tuning_module = Preprocessor(conf=CONF, mode=CONF['parameters']['exec'])
-fine_tuning_evaluation = Evaluator(conf=CONF['parameters'])
+def setUp():
+    fine_tuning_module = Preprocessor(conf=CONF, mode=CONF['parameters']['exec'])
+    fine_tuning_evaluation = Evaluator(conf=CONF['parameters'])
 
-mrc_dataset = load_dataset(CONF['dataset']['training_path'])
+    mrc_dataset = load_dataset(CONF['dataset']['training_path'])
 
-train_dataset = mrc_dataset["train"].map(
-    fine_tuning_module.preprocess_training_examples,
-    batched=True,
-    remove_columns=mrc_dataset["train"].column_names,
-)
-validation_dataset = mrc_dataset["validation"].map(
-    fine_tuning_module.preprocess_validation_examples,
-    batched=True,
-    remove_columns=mrc_dataset["validation"].column_names,
-)
+    train_dataset = mrc_dataset["train"].map(
+        fine_tuning_module.preprocess_training_examples,
+        batched=True,
+        remove_columns=mrc_dataset["train"].column_names,
+    )
+    validation_dataset = mrc_dataset["validation"].map(
+        fine_tuning_module.preprocess_validation_examples,
+        batched=True,
+        remove_columns=mrc_dataset["validation"].column_names,
+    )
+    return fine_tuning_module, train_dataset, validation_dataset, fine_tuning_evaluation, mrc_dataset
 
 def fine_tuning_trainer():
+    fine_tuning_module, train_dataset, validation_dataset, fine_tuning_evaluation, mrc_dataset = setUp()
     # 훈련 및 평가 동시 진행
     # 모델을 저장하려면 push_to_hub = True와 로그인을 위한 개인 토큰 필요
     args = TrainingArguments(
@@ -52,6 +55,7 @@ def fine_tuning_trainer():
     fine_tuning_evaluation.compute_metrics(start_logits, end_logits, validation_dataset, mrc_dataset["validation"]) 
 
 def fine_tuning_evaluator():
+    fine_tuning_module, _, validation_dataset, fine_tuning_evaluation, mrc_dataset = setUp()
     test_args = TrainingArguments(
         CONF['model']['upload'],
         overwrite_output_dir = True,
@@ -65,9 +69,4 @@ def fine_tuning_evaluator():
         )
     predictions, _, _ = trainer.predict(validation_dataset)
     start_logits, end_logits = predictions
-    fine_tuning_evaluation.compute_metrics(start_logits, end_logits, validation_dataset, mrc_dataset["validation"])  
-
-if CONF['parameters']['exec'] == 'train':
-    fine_tuning_trainer()
-else:
-    fine_tuning_evaluator()
+    fine_tuning_evaluation.compute_metrics(start_logits, end_logits, validation_dataset, mrc_dataset["validation"])
