@@ -237,30 +237,52 @@ class Preprocessor:
                     self.__size = self.__size + len(context_list)
                     self.__context_size += context_size
         
-    # 불러온 데이터 정제에 사용되는 함수들
-    # 함수명 변경 가능
     def remove_special_characters(self, sentence):
+        """ 토큰화 과정 전에 데이터셋을 정제하기 위한 함수
+        
+        Args:
+            sentence (String): 정제되지 않은 문장
+            
+        예제:
+            다음과 같이 사용하세요:
+            
+            >>> remove_special_characters(" #$%!MRC @프로젝트  ")
+            MRC 프로젝트
+            >>> remove_special_characters("bichoi0715@naver.com 메일 제거 ")
+            메일 제거
+            
+        Returns:
+            String: 정제된 문장
+        """
+    
         # 문장 시작과 끝 공백 제거
         def strip_sentence(sentence):
             return sentence.strip()
+        
         # HTML 태그 제거
         def sub_tag(sentence):
             return re.sub('<[^>]*>', '', sentence)
+        
         # 이메일 주소 제거
         def sub_email(sentence):
             return re.sub('([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)', '', sentence)
+        
         # URL 제거
         def sub_URL(sentence):
             return re.sub('(http|ftp|https)://(?:[-\w.]|(?:%[\da-fA-F]{2}))+', '', sentence)
+        
         # 꺽쇠 및 꺽쇠 안 문자 제거
         def sub_bracket(sentence):
             return re.sub(r'\<[^>]*\>', '', sentence)
+        
         # 자음 모음 제거
         def sub_con_vow(sentence):
             return re.sub('([ㄱ-ㅎㅏ-ㅣ]+)', '', sentence)
+        
         # 공백 여러 개 하나로 치환
         def sub_blank(sentence):
             return ' '.join(sentence.split())
+        
         # 세 번 이상 반복되는 문자 두 개로 치환
         def sub_repeat_char(sentence):
             p = re.compile('(([a-zA-Z0-9가-힣])\\2{2,})')
@@ -268,11 +290,12 @@ class Preprocessor:
             for r, _ in result:
                 sentence = sentence.replace(r, r[:2])
             return sentence
+        
         # 특수문자 제거
         def sub_noise(sentence):
             sentence = re.sub(r"[^\uAC00-\uD7A30-9a-zA-Z\s]", '', sentence)
             return sentence
-        # 전체 함수 적용
+        
         clean_methods = [strip_sentence, sub_tag, sub_email, sub_URL, sub_bracket, sub_con_vow, sub_blank, sub_repeat_char, sub_noise]
         for method in clean_methods:
             sentence = method(sentence)
