@@ -369,8 +369,8 @@ class Preprocessor:
         return result
 
     def masking(self, data_tokenizing, ratio=0.15):
-        """
-
+        """ 사전학습을 위해 데이터를 마스킹 해주는 함수
+        
         데이터를 토큰화 한 후 특정확률(15%)로 토큰ID를 마스킹 대상으로 선정한다.
         이후 15%의 마스킹 대상 토큰을 다음과 같이 바꾼다.
             - 10%는 다른 단어 토큰ID
