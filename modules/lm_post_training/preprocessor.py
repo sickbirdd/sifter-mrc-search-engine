@@ -212,12 +212,18 @@ class Preprocessor:
             return self.__context_finder(context_dict_and_list.get(data_DOM[0]), data_DOM[1:], deep)
             
     def read_data(self, data_path, data_DOM, data_format = ".json"):
-        """훈련할 데이터 셋을 읽어온다
+        """ Dict과 List로 이루어진 데이터 구조에서 특정 값 찾기
 
+        JSON을 포함한 Dict과 List로 이루어진 구조체에서 찾길 원하는 데이터 위치를 받아 해당 데이터를 리스트로 반환해 주는 내부
+        .. warning:: 3차원 이상 구조체에서는 다른 전처리기 함수와 호환되지 않는다.
+        
         Args:
-            data_path (str): 훈련할 데이터가 있는 폴더의 경로
-            data_DOM (str): 데이터 셋의 문서 구조
-            data_format (str, optional): 데이터 셋의 확장자. 디폴트 값은 ".json".
+            context_dict_and_list (dict): 원본 데이터 구조체
+            data_DOM (list): 찾고자 하는 위치 - ex) ["root", "child1", "#", "child2", "target"] "#"은 리스트를 의미한다.
+            deep (int): 단순한 1차 리스트를 내부 형식 구조에 맞게 맞추기 위한 깊이
+
+        Returns:
+            list: 2차원 이상 값 리스트
         """
         data_path = Path(data_path)
         
