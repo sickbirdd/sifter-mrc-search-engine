@@ -175,6 +175,8 @@ datasets/lm_post_training/validation/*.json
 datasets/lm_post_training/training/LabeledData
 datasets/lm_post_training/training/sourceData
 datasets/lm_post_training/test/LabeledData
+datasets/mrc_fine_tuning/raw/*.json
+datasets/mrc_fine_tuning/test/*.json
 
 # 임시 테스트 함수
 tests/temp
@@ -184,7 +186,3 @@ log.txt
 
 # 모델 및 토크나이저 파일
 modules/lm_post_training/temp_model
-
-# Sphinx
-docs/Makefile
-docs/make.bat
