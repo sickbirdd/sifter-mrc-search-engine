@@ -7,7 +7,6 @@ sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(os.path.abspath(
 from modules.lm_post_training.preprocessor import Preprocessor
 from unittest import TestCase, main
 from modules.config.logging import Test, logging, setUp
-from modules.main import CONF_PT as CONF
 
 setUp()
 LOGGER = logging.getLogger('test')
@@ -16,7 +15,7 @@ class PreprocessorTest(TestCase):
     
     # 클래스 생성시 한번만 실행
     @classmethod
-    def setUpClass(self):
+    def setUpClass(self, CONF):
         # 설정 파일 만들어지면 관련 변수로 대체할 것
         
         self.model_name = CONF["model"]["name"]
