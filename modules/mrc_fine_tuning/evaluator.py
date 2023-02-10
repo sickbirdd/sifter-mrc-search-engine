@@ -2,14 +2,32 @@ import collections
 import numpy as np
 from evaluate import load
 from tqdm.auto import tqdm
-class Evaluator:    
+class Evaluator:
+    """ 파인튜닝 평가 객체
+    모델에 대한 평가를 할 수 있음.
+    
+    Attributes:
+        conf (dict): 설정 파일
+        
+    """
     def __init__(self, conf) -> None:
         self.__metric = load(conf['metric_type'])
         self.__nBest = conf['n_best']
         self.__max_answer_length = conf['max_answer_length']
     
-    # 모델 평가 메트릭 함수
     def compute_metrics(self, start_logits, end_logits, features, examples):
+        """ 모델 평가 메트릭 함수
+        F1 스코어, EM 스코어 계산
+        
+        Args:
+            start_logits (:class:`transformers.modeling_outputs.QuestionAnsweringModelOutput.start_logits`): 모델이 예측한 답 시작지점 
+            end_logits (:class:`transformers.modeling_outputs.QuestionAnsweringModelOutput.end_logits`): 모델이 예측한 답 종료지점
+            features (:class:`datasets.arrow_dataset.Dataset`): 전처리가 끝난 데이터셋
+            examples (:class:`datasets.arrow_dataset.Dataset`): 실제 데이터셋
+        
+        Returns:
+            dict: F1 스코어, EM 스코어         
+        """
         example_to_features = collections.defaultdict(list)
         for idx, feature in enumerate(features):
             example_to_features[feature["example_id"]].append(idx)

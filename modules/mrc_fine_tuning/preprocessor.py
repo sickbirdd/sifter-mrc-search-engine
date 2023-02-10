@@ -1,6 +1,25 @@
 from transformers import AutoTokenizer, AutoModelForQuestionAnswering
 
 class Preprocessor:
+    """ 파인튜닝 전처리 객체
+    학습 & 평가 데이터셋에 대한 전처리 기능이 있습니다.
+    
+    Attributes:
+        conf (dict): 설정 파일
+        
+        mode (string): 훈련 or 평가 선택
+        
+    .. note::
+        model_path = 로컬 모델 파일 경로 혹은 huggingface 모델 이름
+        
+        tokenizer = 전처리시 사용할 토크나이저
+        
+        model = 학습시키거나 평가할 모델
+        
+        max_length = feature의 최대 길이
+        
+        stride = 슬라이딩 윈도우 길이
+    """
     def __init__(self, conf, mode) -> None:
         self.__model_path = conf['model'][mode]['name']
         self.tokenizer = AutoTokenizer.from_pretrained(self.__model_path)
@@ -8,8 +27,15 @@ class Preprocessor:
         self.__max_length = conf['parameters']['max_length']
         self.__stride = conf['parameters']['stride']
     
-    # 훈련 데이터 전처리 함수
     def preprocess_training_examples(self, examples):
+        """ 학습 데이터셋에 대한 전처리
+
+        Args:
+            examples (:class:`datasets.formatting.formatting.LazyBatch`): 학습 데이터셋 배치
+           
+        Returns:
+            dict : 정답 레이블이 포함된 학습 데이터셋
+        """
         questions = [q.strip() for q in examples["question"]]
         inputs = self.tokenizer(
             questions,
@@ -64,8 +90,15 @@ class Preprocessor:
         inputs["end_positions"] = end_positions
         return inputs
     
-    # 검증 데이터 전처리 함수
     def preprocess_validation_examples(self, examples):
+        """ 검증 데이터셋에 대한 전처리
+
+        Args:
+            examples (:class:`datasets.formatting.formatting.LazyBatch`): 검증 데이터셋 배치
+           
+        Returns:
+            :class:`transformers.tokenization_utils_base.BatchEncoding` : 질문과 본문 오프셋을 구분한 검증 데이터셋
+        """
         questions = [q.strip() for q in examples["question"]]
         inputs = self.tokenizer(
             questions,
