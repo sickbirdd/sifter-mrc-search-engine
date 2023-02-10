@@ -1,4 +1,4 @@
-from transformers import AutoTokenizer, AutoModelForQuestionAnswering
+from transformers import AutoTokenizer
 
 class Preprocessor:
     """ 파인튜닝 전처리 객체
