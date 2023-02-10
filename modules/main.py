@@ -1,12 +1,9 @@
-from lm_post_training.train import train
-from mrc_fine_tuning.train_futher_release import FineTuning
-import sys
-import logging
-from loader import conf_log as CONFIG_LOG
-
 import os
 import sys
 import yaml
+import logging
+from lm_post_training.train import train
+from mrc_fine_tuning.train_futher_release import FineTuning
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
 if __name__ == '__main__':
