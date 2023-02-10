@@ -1,18 +1,14 @@
 import logging
 import logging.config
 import yaml
+from modules.loader import conf_log as CONF
 
 def setUp():
     """ 설정 파일에서 logger 설정 정보를 불러와 설정한다."""
-    with open('modules/config.yaml') as f:
-        conf = yaml.safe_load(f)
+    logging.config.dictConfig(CONF)
 
-    # logging 설정 (config['log'] 참고)
-    config = conf["log"]
-    logging.config.dictConfig(config)
-
-if __name__ == '__main__':
-    setUp()
+# if __name__ == '__main__':
+setUp()
 
 class SingleLogger:
     """ 프로세스상 유일한 logger를 공유하여 사용하기 위한 객체"""

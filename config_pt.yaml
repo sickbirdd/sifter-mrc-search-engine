@@ -6,9 +6,9 @@ parameters:
   optimizer:
     name: AdamW
     lr: 5e-5
+model:
+  name: klue/bert-base
   upload: modules/lm_post_training/temp_model
-  model:
-    name: klue/bert-base
 dataset:
   path: datasets/lm_post_training/training/LabeledData
   struct: named_entity/#/content/#/sentence

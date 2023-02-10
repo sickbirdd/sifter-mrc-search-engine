@@ -7,6 +7,7 @@ sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(os.path.abspath(
 from modules.lm_post_training.preprocessor import Preprocessor
 from unittest import TestCase, main
 from modules.config.logging import Test, logging, setUp
+from modules.loader import conf_pt as CONF
 
 setUp()
 LOGGER = logging.getLogger('test')
@@ -17,13 +18,11 @@ class PreprocessorTest(TestCase):
     @classmethod
     def setUpClass(self):
         # 설정 파일 만들어지면 관련 변수로 대체할 것
-        with open('modules/config.yaml') as f:
-            conf = yaml.safe_load(f)
         
-        self.model_name = conf["model"]["name"]
+        self.model_name = CONF["model"]["name"]
         self.impl_preprocessor  = Preprocessor(self.model_name)
-        self.data_path = conf["dataset"]["post_training"]["test"]["path"]
-        self.data_DOM = conf["dataset"]["post_training"]["test"]["struct"].split('/')
+        self.data_path = CONF["dataset"]["path"]
+        self.data_DOM = CONF["dataset"]["struct"].split('/')
         
         LOGGER.info("1:---최초 생성 테스트---")
         assert self.impl_preprocessor.get_size() == 0
