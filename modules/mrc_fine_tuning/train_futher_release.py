@@ -6,6 +6,7 @@ from transformers import TrainingArguments, Trainer, AutoModelForQuestionAnsweri
 from datasets import load_dataset
 from modules.mrc_fine_tuning.preprocessor import Preprocessor
 from modules.mrc_fine_tuning.evaluator import Evaluator
+from config.logging import SingleLogger, LoggerLogCallback
 
 class FineTuning:
     """실제 Fine Tuning 훈련을 진행한다.
@@ -18,6 +19,7 @@ class FineTuning:
         self.CONF = CONF
         self.preprocessor = Preprocessor(conf=self.CONF, mode=self.CONF['parameters']['exec'])
         self.evaluation = Evaluator(conf=self.CONF['parameters'])
+        self.LOGGER = SingleLogger().setFileogger(logger_name='train-ft', file_name="train-ft.log", level="INFO")
 
     def __get_dataset(self, dataset):
         """데이터 셋이 이미 있는 경우 해당 데이터셋을 반환 아닌 경우 데이터셋을 정제해서 저장
@@ -31,6 +33,7 @@ class FineTuning:
                 batched=True,
                 remove_columns=self.__mrc_dataset[dataset].column_names,
             )
+            self.LOGGER.info(str(dataset) + " 데이터 셋이 설정되었습니다.")
             
             if dataset == 'train':
                 self.__train_dataset = dataset
@@ -45,6 +48,7 @@ class FineTuning:
         cls = type(self)
         if not hasattr(cls, "self.__mrc_dataset"):
             self.__mrc_dataset = load_dataset(self.CONF['dataset']['training_path'])
+            self.LOGGER.info("데이터 셋이 설정되었습니다.")
 
 
     def fine_tuning_trainer(self, mode):
@@ -54,6 +58,7 @@ class FineTuning:
         
         주의점: mode는 train과 아닌것으로 구분된다.
         """
+        self.LOGGER.info("파인 튜닝 시작")  
         self.mrc_dataset = self.__load_dataset()
 
         if mode == 'train':
@@ -70,6 +75,9 @@ class FineTuning:
                 weight_decay=self.CONF['parameters']['weight_decay'],
                 fp16=self.CONF['parameters']['fp16'],
                 push_to_hub=self.CONF['parameters']['push_to_hub'],
+                
+                logging_dir='./logs',   
+                logging_steps=1,
             )
         else:
             args = TrainingArguments(
@@ -77,19 +85,27 @@ class FineTuning:
                 overwrite_output_dir = True,
                 do_train = False,
                 do_predict = True,
-                per_device_eval_batch_size = self.CONF['parameters']['eval_batch']
+                per_device_eval_batch_size = self.CONF['parameters']['eval_batch'],
+
+                logging_dir='./logs',   
+                logging_steps=100,
             )
 
+        self.LOGGER.info("파인 튜닝 트레이너 세팅 완료 및 훈련 시작")
         trainer = Trainer(
-            model = AutoModelForQuestionAnswering(CONF['model'][mode]['name']), 
+            model = AutoModelForQuestionAnswering.from_pretrained(self.CONF['model'][mode]['name']), 
             args = args,
             train_dataset=self.__get_dataset('train') if mode == 'train' else None,
             eval_dataset=self.__get_dataset('validation') if mode == 'train' else None,
             tokenizer=self.preprocessor.tokenizer if mode == 'train' else None,
+            callbacks=[LoggerLogCallback()],
         )
+
         if mode == 'train':
             trainer.train()
         
         predictions, _, _ = trainer.predict(self.__get_dataset('validation'))
         start_logits, end_logits = predictions
         self.evaluation.compute_metrics(start_logits, end_logits, self.__get_dataset('validation'), self.mrc_dataset["validation"])
+        
+        self.LOGGER.info("파인 튜닝 완료")

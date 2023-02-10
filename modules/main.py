@@ -4,6 +4,9 @@ import yaml
 import logging
 from lm_post_training.train import train
 from mrc_fine_tuning.train_futher_release import FineTuning
+import sys
+import logging
+from config.logging import SingleLogger
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
 if __name__ == '__main__':
@@ -42,7 +45,7 @@ if __name__ == '__main__':
         FineTuning(CONF=CONF_FT).fine_tuning_trainer('train')
     elif sys.argv[1] == 'eval':
         print("EVAL MODE")
-        FineTuning(CONF=CONF_FT).fine_tuning_trainer('else')
+        FineTuning(CONF=CONF_FT).fine_tuning_trainer('eval')
     else:
         print("올바른 명령어가 아닙니다.")
         print("다음과 같은 해결책이 있습니다.")
