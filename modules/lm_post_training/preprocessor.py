@@ -212,18 +212,17 @@ class Preprocessor:
             return self.__context_finder(context_dict_and_list.get(data_DOM[0]), data_DOM[1:], deep)
             
     def read_data(self, data_path, data_DOM, data_format = ".json"):
-        """ Dict과 List로 이루어진 데이터 구조에서 특정 값 찾기
+        """ 데이터 경로에서 특정 확장자로 구성된 데이터를 모두 읽는다
 
-        JSON을 포함한 Dict과 List로 이루어진 구조체에서 찾길 원하는 데이터 위치를 받아 해당 데이터를 리스트로 반환해 주는 내부
-        .. warning:: 3차원 이상 구조체에서는 다른 전처리기 함수와 호환되지 않는다.
+        데이터가 존재하는 경로안의 파일에서 읽기 원하는 확장자를 받아 읽은 모든 JSON을 포함한 Dict과 List로 이루어진 
+        구조체와 찾길 원하는 데이터 위치를 전달해 해당 데이터를 리스트로 반환한 값과 길이를 저장한다.
+        .. warning:: JSON 이외의 파일 확장자는 호환되지 않음.
         
         Args:
-            context_dict_and_list (dict): 원본 데이터 구조체
+            data_path (str): 데이터가 있는 폴더의 경로
             data_DOM (list): 찾고자 하는 위치 - ex) ["root", "child1", "#", "child2", "target"] "#"은 리스트를 의미한다.
-            deep (int): 단순한 1차 리스트를 내부 형식 구조에 맞게 맞추기 위한 깊이
+            data_format (str, optional): 찾고자 하는 확장자 명. 디폴트 값은 ".json".
 
-        Returns:
-            list: 2차원 이상 값 리스트
         """
         data_path = Path(data_path)
         
@@ -375,8 +374,8 @@ class Preprocessor:
         return result
 
     def masking(self, data_tokenizing, ratio=0.15):
-        """ 사전학습을 위해 데이터를 마스킹 해주는 함수
-        
+        """
+
         데이터를 토큰화 한 후 특정확률(15%)로 토큰ID를 마스킹 대상으로 선정한다.
         이후 15%의 마스킹 대상 토큰을 다음과 같이 바꾼다.
             - 10%는 다른 단어 토큰ID
