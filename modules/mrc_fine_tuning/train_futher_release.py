@@ -4,7 +4,6 @@ sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(os.path.abspath(
 
 from transformers import TrainingArguments, Trainer, AutoModelForQuestionAnswering
 from datasets import load_dataset
-from modules.loader import conf_ft as CONF
 from modules.mrc_fine_tuning.preprocessor import Preprocessor
 from modules.mrc_fine_tuning.evaluator import Evaluator
 from config.logging import SingleLogger, LoggerLogCallback
@@ -16,9 +15,10 @@ class FineTuning:
         preprocessor (`Preprocessor`): ??
         evaluation (`Evaluator`): ??
     """
-    def __init__(self) -> None:
-        self.preprocessor = Preprocessor(conf=CONF, mode=CONF['parameters']['exec'])
-        self.evaluation = Evaluator(conf=CONF['parameters'])
+    def __init__(self, CONF) -> None:
+        self.CONF = CONF
+        self.preprocessor = Preprocessor(conf=self.CONF, mode=self.CONF['parameters']['exec'])
+        self.evaluation = Evaluator(conf=self.CONF['parameters'])
         self.LOGGER = SingleLogger().setFileogger(logger_name='train-ft', file_name="train-ft.log", level="INFO")
 
     def __get_dataset(self, dataset):
@@ -47,7 +47,7 @@ class FineTuning:
         """데이터 셋이 없으면 저장"""
         cls = type(self)
         if not hasattr(cls, "self.__mrc_dataset"):
-            self.__mrc_dataset = load_dataset(CONF['dataset']['training_path'])
+            self.__mrc_dataset = load_dataset(self.CONF['dataset']['training_path'])
             self.LOGGER.info("데이터 셋이 설정되었습니다.")
 
 
@@ -65,35 +65,32 @@ class FineTuning:
             # 훈련 및 평가 동시 진행
             # 모델을 저장하려면 push_to_hub = True와 로그인을 위한 개인 토큰 필요
             args = TrainingArguments(
-                CONF['model']['upload'],
+                self.CONF['model']['upload'],
                 evaluation_strategy="no",
                 save_strategy="epoch",
-                per_device_train_batch_size=CONF['parameters']['train_batch'],
-                per_device_eval_batch_size=CONF['parameters']['eval_batch'],
-                learning_rate=CONF['parameters']['learning_rate'],
-                num_train_epochs=CONF['parameters']['epochs'],
-                weight_decay=CONF['parameters']['weight_decay'],
-                fp16=CONF['parameters']['fp16'],
-                push_to_hub=CONF['parameters']['push_to_hub'],
-
-                logging_dir='./logs',   
-                logging_steps=1,
+                per_device_train_batch_size=self.CONF['parameters']['train_batch'],
+                per_device_eval_batch_size=self.CONF['parameters']['eval_batch'],
+                learning_rate=self.CONF['parameters']['learning_rate'],
+                num_train_epochs=self.CONF['parameters']['epochs'],
+                weight_decay=self.CONF['parameters']['weight_decay'],
+                fp16=self.CONF['parameters']['fp16'],
+                push_to_hub=self.CONF['parameters']['push_to_hub'],
             )
         else:
             args = TrainingArguments(
-                CONF['model']['upload'],
+                self.CONF['model']['upload'],
                 overwrite_output_dir = True,
                 do_train = False,
                 do_predict = True,
-                per_device_eval_batch_size = CONF['parameters']['eval_batch'],
+                per_device_eval_batch_size = self.CONF['parameters']['eval_batch'],
 
-                logging_dir='./logs',
-                logging_steps=1,
+                logging_dir="./logs"
+                logging_steps=100
             )
 
         self.LOGGER.info("파인 튜닝 트레이너 세팅 완료 및 훈련 시작")
         trainer = Trainer(
-            model = AutoModelForQuestionAnswering.from_pretrained(CONF['model'][mode]['name']), 
+            model = AutoModelForQuestionAnswering.from_pretrained(self.CONF['model'][mode]['name']), 
             args = args,
             train_dataset=self.__get_dataset('train') if mode == 'train' else None,
             eval_dataset=self.__get_dataset('validation') if mode == 'train' else None,

@@ -4,7 +4,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))))
 from pathlib import Path
 from datasets import load_dataset
-from modules.loader import conf_ft as CONF
+from modules.main import CONF_FT as CONF
 
 def parse_data(path, code):
     path = Path(path)
