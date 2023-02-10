@@ -8,7 +8,7 @@ from transformers import BertForPreTraining
 from torch.utils.data import DataLoader
 from modules.lm_post_training.dataset import MeditationsDataset
 from modules.lm_post_training.preprocessor import Preprocessor
-from modules.loader import conf_pt as CONF
+from modules.main import  CONF_PT as CONF
 from transformers import BertForPreTraining
 from modules.config.TqdmToLogger import TqdmToLogger
 from modules.config.logging import SingleLogger, logging

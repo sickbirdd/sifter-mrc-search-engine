@@ -4,11 +4,28 @@ import sys
 import logging
 from loader import conf_log as CONFIG_LOG
 
+import os
+import sys
+import yaml
+sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
+
 if __name__ == '__main__':
     print("Main Module Execute")
+    
+    with open('config_pt.yaml') as f:
+        """ 설정 파일 중 post-training 관련 설정 파일의 정보를 불러와 설정한다."""
+        CONF_PT = yaml.safe_load(f)
+
+    with open('config_ft.yaml') as f:
+        """ 설정 파일 중 fine-tuning 관련 설정 파일의 정보를 불러와 설정한다."""
+        CONF_FT = yaml.safe_load(f)
+        
+    with open('config_log.yaml') as f:
+        """ 설정 파일 중 log 관련 설정 파일의 정보를 불러와 설정한다."""
+        CONF_LOG = yaml.safe_load(f)
 
     # 설정파일에서 로거 정보를 불러와 세팅한다.
-    logging.config.dictConfig(CONFIG_LOG)
+    logging.config.dictConfig(CONF_LOG)
 
     # 인자 체크
     if len(sys.argv) < 2:

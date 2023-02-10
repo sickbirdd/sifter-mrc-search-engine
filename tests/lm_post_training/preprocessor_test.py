@@ -7,7 +7,7 @@ sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(os.path.abspath(
 from modules.lm_post_training.preprocessor import Preprocessor
 from unittest import TestCase, main
 from modules.config.logging import Test, logging, setUp
-from modules.loader import conf_pt as CONF
+from modules.main import CONF_PT as CONF
 
 setUp()
 LOGGER = logging.getLogger('test')
