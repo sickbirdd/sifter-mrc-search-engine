@@ -75,6 +75,9 @@ class FineTuning:
                 weight_decay=self.CONF['parameters']['weight_decay'],
                 fp16=self.CONF['parameters']['fp16'],
                 push_to_hub=self.CONF['parameters']['push_to_hub'],
+                
+                logging_dir='./logs',   
+                logging_steps=1,
             )
         else:
             args = TrainingArguments(
@@ -84,8 +87,8 @@ class FineTuning:
                 do_predict = True,
                 per_device_eval_batch_size = self.CONF['parameters']['eval_batch'],
 
-                logging_dir="./logs"
-                logging_steps=100
+                logging_dir='./logs',   
+                logging_steps=100,
             )
 
         self.LOGGER.info("파인 튜닝 트레이너 세팅 완료 및 훈련 시작")
