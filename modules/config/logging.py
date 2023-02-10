@@ -1,6 +1,5 @@
 import logging
 import logging.config
-from modules.loader import conf_log as CONF
 from transformers import TrainerCallback
 
 class SingleLogger:
@@ -36,7 +35,7 @@ class SingleLogger:
         self.__logger = logging.getLogger(logger_name)
         return self.__logger
 
-    def setFileogger(self, logger_name, file_name = "", mode = "a", encoding="utf-8", level = "INFO") -> logging.Logger:
+    def setFileogger(self, logger_name, file_name = "", mode = "a", encoding="utf-8", level = "INFO", format="%(levelname)s[%(module)s]:%(message)s (%(asctime)s) pid:%(process)d pn:%(processName)s tid:%(thread)d tn:%(threadName)s") -> logging.Logger:
         """ logger를 설정한다.
 
         추가적인 인자를 통해 미리 정의하지 않은 파일 로그를 설정할 수 있다.
@@ -54,6 +53,8 @@ class SingleLogger:
         self.__logger.propagate = False
         hanler = logging.FileHandler(filename=file_name, encoding=encoding, mode=mode)
         hanler.setLevel(level)
+        hanler.setFormatter(logging.Formatter(format))
+
         
         self.__logger.addHandler(hanler)
 

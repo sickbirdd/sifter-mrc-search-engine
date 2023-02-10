@@ -98,9 +98,8 @@ class FineTuning:
             train_dataset=self.__get_dataset('train') if mode == 'train' else None,
             eval_dataset=self.__get_dataset('validation') if mode == 'train' else None,
             tokenizer=self.preprocessor.tokenizer if mode == 'train' else None,
+            callbacks=[LoggerLogCallback()],
         )
-
-        trainer.add_callback(LoggerLogCallback())
 
         if mode == 'train':
             trainer.train()
