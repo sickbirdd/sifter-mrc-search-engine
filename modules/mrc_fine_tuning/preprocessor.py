@@ -21,9 +21,7 @@ class Preprocessor:
         stride = 슬라이딩 윈도우 길이
     """
     def __init__(self, conf, mode) -> None:
-        self.__model_path = conf['model'][mode]['name']
-        self.tokenizer = AutoTokenizer.from_pretrained(self.__model_path)
-        self.model = AutoModelForQuestionAnswering.from_pretrained(self.__model_path)
+        self.tokenizer = AutoTokenizer.from_pretrained(conf['model'][mode]['name'])
         self.__max_length = conf['parameters']['max_length']
         self.__stride = conf['parameters']['stride']
     
