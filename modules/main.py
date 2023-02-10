@@ -1,9 +1,14 @@
 from lm_post_training.train import train
 from mrc_fine_tuning.train_futher_release import FineTuning
 import sys
+import logging
+from loader import conf_log as CONFIG_LOG
 
 if __name__ == '__main__':
     print("Main Module Execute")
+
+    # 설정파일에서 로거 정보를 불러와 세팅한다.
+    logging.config.dictConfig(CONFIG_LOG)
 
     # 인자 체크
     if len(sys.argv) < 2:
