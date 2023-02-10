@@ -1,5 +1,5 @@
 from lm_post_training.train import train
-from mrc_fine_tuning.Train import fine_tuning_trainer, fine_tuning_evaluator, setUp
+from mrc_fine_tuning.Train import fine_tuning_trainer, fine_tuning_evaluator
 import sys
 
 if __name__ == '__main__':
@@ -11,7 +11,7 @@ if __name__ == '__main__':
         print("인자가 부족합니다.")
         print("다음과 같은 해결책이 있습니다.")
         print("python.exe program.py [command]")
-        print("command: post-training, fine-tuning, eval")
+        print("command: [post-training, fine-tuning, eval]")
         sys.exit()
 
     # 인자에 따라 훈련 방식 변경
@@ -21,12 +21,10 @@ if __name__ == '__main__':
         train()
     elif sys.argv[1] == 'fine-tuning':
         print("FINE_TUNING")
-        fine_tuning_module, train_dataset, validation_dataset, fine_tuning_evaluation, mrc_dataset = setUp()
-        fine_tuning_trainer(fine_tuning_module, train_dataset, validation_dataset, fine_tuning_evaluation, mrc_dataset)
+        fine_tuning_trainer()
     elif sys.argv[1] == 'eval':
         print("EVAL MODE")
-        fine_tuning_module, train_dataset, validation_dataset, fine_tuning_evaluation, mrc_dataset = setUp()
-        fine_tuning_evaluator(fine_tuning_module, train_dataset, validation_dataset, fine_tuning_evaluation, mrc_dataset)
+        fine_tuning_evaluator()
     else:
         print("올바른 명령어가 아닙니다.")
         print("다음과 같은 해결책이 있습니다.")

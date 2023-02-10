@@ -26,7 +26,8 @@ def setUp():
     )
     return fine_tuning_module, train_dataset, validation_dataset, fine_tuning_evaluation, mrc_dataset
 
-def fine_tuning_trainer(fine_tuning_module, train_dataset, validation_dataset, fine_tuning_evaluation, mrc_dataset):
+def fine_tuning_trainer():
+    fine_tuning_module, train_dataset, validation_dataset, fine_tuning_evaluation, mrc_dataset = setUp()
     # 훈련 및 평가 동시 진행
     # 모델을 저장하려면 push_to_hub = True와 로그인을 위한 개인 토큰 필요
     args = TrainingArguments(
@@ -53,7 +54,8 @@ def fine_tuning_trainer(fine_tuning_module, train_dataset, validation_dataset, f
     start_logits, end_logits = predictions
     fine_tuning_evaluation.compute_metrics(start_logits, end_logits, validation_dataset, mrc_dataset["validation"]) 
 
-def fine_tuning_evaluator(fine_tuning_module, train_dataset, validation_dataset, fine_tuning_evaluation, mrc_dataset):
+def fine_tuning_evaluator():
+    fine_tuning_module, _, validation_dataset, fine_tuning_evaluation, mrc_dataset = setUp()
     test_args = TrainingArguments(
         CONF['model']['upload'],
         overwrite_output_dir = True,
