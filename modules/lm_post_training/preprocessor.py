@@ -362,6 +362,21 @@ class Preprocessor:
         return result
 
     def masking(self, data_tokenizing, ratio=0.15):
+        """
+
+        데이터를 토큰화 한 후 특정확률(15%)로 토큰ID를 마스킹 대상으로 선정한다.
+        이후 15%의 마스킹 대상 토큰을 다음과 같이 바꾼다.
+            - 10%는 다른 단어 토큰ID
+            - 10%는 바꾸지 않고 그대로 자기자신 토큰ID
+            - 80%는 [MASK]토큰의 토큰ID
+
+        Args:
+            data_tokenizing (dict): tokenizer를 거친 데이터 딕셔너리
+            ratio (float, optional): _description_. Defaults to 0.15.
+
+        Returns:
+            dict: 마스킹 한 데이터 딕셔너리에 기존 정답 토큰ID 값인 label을 추가해 반환
+        """
         cls_token=self.tokenizer.cls_token_id
         sep_token=self.tokenizer.sep_token_id,
         mask_token=self.tokenizer.mask_token_id,
