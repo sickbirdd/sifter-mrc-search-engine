@@ -1,82 +1,74 @@
 import os
 import sys
-path_modules =  os.path.dirname(os.path.abspath(os.path.dirname(os.path.abspath(__file__)) ))
-path_root = os.path.dirname(os.path.abspath(path_modules))
-sys.path.append(path_modules)
-sys.path.append(path_root)
-import yaml
-with open('modules/config.yaml') as f:
-    conf = yaml.safe_load(f)['fine_tuning']
+sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))))
 
-import torch
+from transformers import TrainingArguments, Trainer
 from datasets import load_dataset
-from transformers import TrainingArguments, Trainer, AutoModelForQuestionAnswering, AutoTokenizer
-import modules.mrc_fine_tuning.finetune as ft
+from modules.loader import conf_ft as CONF
+from modules.mrc_fine_tuning.preprocessor import Preprocessor
+from modules.mrc_fine_tuning.evaluator import Evaluator
 
-fine_tuning_module = ft.fineTuningProcess(conf)
-model_path = conf['train']['model_name']
-tokenizer = fine_tuning_module.tokenizer
+fine_tuning_module = Preprocessor(conf=CONF, mode=CONF['parameters']['exec'])
+fine_tuning_evaluation = Evaluator(conf=CONF['parameters'])
 
-# 훈련인지 평가인지에 따라 다른 모델 경로 설정
-if(conf['exec'] == 'eval'):
-    model_path = conf['eval']['model_name']
-    tokenizer = AutoTokenizer.from_pretrained(model_path)
-model = AutoModelForQuestionAnswering.from_pretrained(model_path)
-mrc_datasets = load_dataset(conf['data_path'])
+mrc_dataset = load_dataset(CONF['dataset']['training_path'])
 
-train_dataset = mrc_datasets["train"].map(
+train_dataset = mrc_dataset["train"].map(
     fine_tuning_module.preprocess_training_examples,
     batched=True,
-    remove_columns=mrc_datasets["train"].column_names,
+    remove_columns=mrc_dataset["train"].column_names,
 )
-validation_dataset = mrc_datasets["validation"].map(
+validation_dataset = mrc_dataset["validation"].map(
     fine_tuning_module.preprocess_validation_examples,
     batched=True,
-    remove_columns=mrc_datasets["validation"].column_names,
+    remove_columns=mrc_dataset["validation"].column_names,
 )
 
-# 훈련 및 평가 동시 진행
-# 모델을 저장하려면 push_to_hub = True와 로그인을 위한 개인 토큰 필요
-if(conf['exec'] == 'train'):
+def fine_tuning_trainer():
+    # 훈련 및 평가 동시 진행
+    # 모델을 저장하려면 push_to_hub = True와 로그인을 위한 개인 토큰 필요
     args = TrainingArguments(
-        conf['train']['upload_path'],
+        CONF['model']['upload'],
         evaluation_strategy="no",
         save_strategy="epoch",
-        per_device_train_batch_size=conf['train_batch'],
-        per_device_eval_batch_size=conf['eval_batch'],
-        learning_rate=conf['learning_rate'],
-        num_train_epochs=conf['epochs'],
-        weight_decay=conf['weight_decay'],
-        fp16=conf['fp16'],
-        push_to_hub=conf['push_to_hub'],
-    )
+        per_device_train_batch_size=CONF['parameters']['train_batch'],
+        per_device_eval_batch_size=CONF['parameters']['eval_batch'],
+        learning_rate=CONF['parameters']['learning_rate'],
+        num_train_epochs=CONF['parameters']['epochs'],
+        weight_decay=CONF['parameters']['weight_decay'],
+        fp16=CONF['parameters']['fp16'],
+        push_to_hub=CONF['parameters']['push_to_hub'],
+        )
     trainer = Trainer(
-        model=model,
+        model=fine_tuning_module.model,
         args=args,
         train_dataset=train_dataset,
         eval_dataset=validation_dataset,
-        tokenizer=tokenizer,
-    )
+        tokenizer=fine_tuning_module.tokenizer,
+        )
     trainer.train()
     predictions, _, _ = trainer.predict(validation_dataset)
     start_logits, end_logits = predictions
-    fine_tuning_module.compute_metrics(start_logits, end_logits, validation_dataset, mrc_datasets["validation"])
+    fine_tuning_evaluation.compute_metrics(start_logits, end_logits, validation_dataset, mrc_dataset["validation"]) 
 
-# 평가만 진행
-# 프로젝트 파일 내에 평가 모델 파일 저장(이름 중복 시 덮어씌움)
-else:
+def fine_tuning_evaluator():
     test_args = TrainingArguments(
-        conf['eval']['eval_path'],
-        overwrite_output_dir = True,
-        do_train = False,
-        do_predict = True,
-        per_device_eval_batch_size = conf['eval_batch'],   
-        dataloader_drop_last = False    
+    CONF['model']['upload'],
+    overwrite_output_dir = True,
+    do_train = False,
+    do_predict = True,
+    per_device_eval_batch_size = CONF['parameters']['eval_batch'],   
+    dataloader_drop_last = False
     )
     trainer = Trainer(
-        model = model, 
+        model = fine_tuning_module.model, 
         args = test_args, 
-        compute_metrics = fine_tuning_module.compute_metrics
-    )
+        compute_metrics = fine_tuning_evaluation.compute_metrics
+        )
     test_results = trainer.predict(validation_dataset)
-    print(test_results)
+    print(test_results) 
+
+if CONF['parameters']['exec'] == 'train':
+    fine_tuning_trainer()
+else:
+    fine_tuning_evaluator()

@@ -1,11 +1,7 @@
 parameters:
   epochs: 3
   max_length: 512
-  upload: modules/mrc_fine_tuning/eval_model
-  model:
-    train_name: klue/bert-base
-    eval_name: 'Kdogs/klue-finetuned-squad_kor_v1'
-  metric_type: 'squad'
+  metric_type: squad
   stride: 128
   n_best: 20
   max_answer_length: 30
@@ -15,8 +11,16 @@ parameters:
   weight_decay: 0.01
   fp16: False
   push_to_hub: False
-  login_token: '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'
-  exec: 'eval'
+  login_token: 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
+  exec: eval
+model:
+    train:
+      name: klue/bert-base
+    eval:
+      name: Kdogs/klue-finetuned-squad_kor_v1
+    upload: modules/mrc_fine_tuning/eval_model
 dataset:
-  training_path: squad_kor_v1'
+  training_path: squad_kor_v1
   test_path: datasets/lm_post_training/test/LabeledData
+
+
