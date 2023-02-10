@@ -15,7 +15,7 @@ class FineTuning:
         preprocessor (`Preprocessor`): ??
         evaluation (`Evaluator`): ??
     """
-    def __init__(self) -> None:
+    def __init__(self, CONF) -> None:
         self.preprocessor = Preprocessor(conf=CONF, mode=CONF['parameters']['exec'])
         self.evaluation = Evaluator(conf=CONF['parameters'])
 

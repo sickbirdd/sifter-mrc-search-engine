@@ -39,13 +39,13 @@ if __name__ == '__main__':
     #TODO : 모델 파리미터 변경
     if sys.argv[1] == 'post-training':
         print("POST_TRAINING")
-        train()
+        train(CONF=CONF_PT)
     elif sys.argv[1] == 'fine-tuning':
         print("FINE_TUNING")
-        FineTuning().fine_tuning_trainer('train')
+        FineTuning(CONF=CONF_FT).fine_tuning_trainer('train')
     elif sys.argv[1] == 'eval':
         print("EVAL MODE")
-        FineTuning().fine_tuning_trainer('else')
+        FineTuning(CONF=CONF_FT).fine_tuning_trainer('else')
     else:
         print("올바른 명령어가 아닙니다.")
         print("다음과 같은 해결책이 있습니다.")
