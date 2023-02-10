@@ -53,20 +53,19 @@ def fine_tuning_trainer():
 
 def fine_tuning_evaluator():
     test_args = TrainingArguments(
-    CONF['model']['upload'],
-    overwrite_output_dir = True,
-    do_train = False,
-    do_predict = True,
-    per_device_eval_batch_size = CONF['parameters']['eval_batch'],   
-    dataloader_drop_last = False
+        CONF['model']['upload'],
+        overwrite_output_dir = True,
+        do_train = False,
+        do_predict = True,
+        per_device_eval_batch_size = CONF['parameters']['eval_batch']
     )
     trainer = Trainer(
         model = fine_tuning_module.model, 
-        args = test_args, 
-        compute_metrics = fine_tuning_evaluation.compute_metrics
+        args = test_args
         )
-    test_results = trainer.predict(validation_dataset)
-    print(test_results) 
+    predictions, _, _ = trainer.predict(validation_dataset)
+    start_logits, end_logits = predictions
+    fine_tuning_evaluation.compute_metrics(start_logits, end_logits, validation_dataset, mrc_dataset["validation"])  
 
 if CONF['parameters']['exec'] == 'train':
     fine_tuning_trainer()
