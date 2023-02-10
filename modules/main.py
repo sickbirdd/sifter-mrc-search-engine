@@ -4,9 +4,8 @@ import sys
 
 if __name__ == '__main__':
     print("Main Module Execute")
-    # LM Post Training
-    # return value : transformers
-    # Domain Specific BERT, koBERT(default)
+
+    # 인자 체크
     print(sys.argv)
     if len(sys.argv) < 2:
         print("인자가 부족합니다.")
@@ -15,6 +14,8 @@ if __name__ == '__main__':
         print("command: post-training, fine-tuning, eval")
         sys.exit()
 
+    # 인자에 따라 훈련 방식 변경
+    #TODO : 모델 파리미터 변경
     if sys.argv[1] == 'post-training':
         print("POST_TRAINING")
         train()
@@ -30,8 +31,3 @@ if __name__ == '__main__':
         print("올바른 명령어가 아닙니다.")
         print("다음과 같은 해결책이 있습니다.")
         print("ex) python.exe program.py post-training")
-
-    
-    # MRC Fine Tuning
-
-    # MRC Service
