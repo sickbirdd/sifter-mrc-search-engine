@@ -9,7 +9,7 @@ if __name__ == '__main__':
     if len(sys.argv) < 2:
         print("인자가 부족합니다.")
         print("다음과 같은 해결책이 있습니다.")
-        print("python.exe program.py [command]")
+        print("python.exe main.py [command]")
         print("command: [post-training, fine-tuning, eval]")
         sys.exit()
 
@@ -27,4 +27,4 @@ if __name__ == '__main__':
     else:
         print("올바른 명령어가 아닙니다.")
         print("다음과 같은 해결책이 있습니다.")
-        print("ex) python.exe program.py post-training")
+        print("ex) python.exe main.py post-training")
