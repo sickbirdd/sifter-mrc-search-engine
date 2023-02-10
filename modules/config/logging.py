@@ -1,6 +1,7 @@
 import logging
 import logging.config
 from modules.loader import conf_log as CONF
+from transformers import TrainerCallback
 
 class SingleLogger:
     """ 프로세스상 유일한 logger를 공유하여 사용하기 위한 객체"""
@@ -58,6 +59,13 @@ class SingleLogger:
 
         self.__logger.setLevel(level)
         return self.__logger
+
+class LoggerLogCallback(TrainerCallback):
+    def on_log(self, args, state, control, logs=None, **kwargs):
+        control.should_log = False
+        _ = logs.pop("total_flos", None)
+        if state.is_local_process_zero:
+            SingleLogger().getLogger().info(logs)
 
 test_logger = logging.getLogger('test')
 

@@ -29,7 +29,7 @@ if __name__ == '__main__':
         FineTuning().fine_tuning_trainer('train')
     elif sys.argv[1] == 'eval':
         print("EVAL MODE")
-        FineTuning().fine_tuning_trainer('else')
+        FineTuning().fine_tuning_trainer('eval')
     else:
         print("올바른 명령어가 아닙니다.")
         print("다음과 같은 해결책이 있습니다.")

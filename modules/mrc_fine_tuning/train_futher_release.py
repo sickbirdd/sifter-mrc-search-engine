@@ -2,20 +2,12 @@ import os
 import sys
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))))
 
-from transformers import TrainingArguments, Trainer, TrainerCallback, AutoModelForQuestionAnswering
+from transformers import TrainingArguments, Trainer, AutoModelForQuestionAnswering
 from datasets import load_dataset
 from modules.loader import conf_ft as CONF
 from modules.mrc_fine_tuning.preprocessor import Preprocessor
 from modules.mrc_fine_tuning.evaluator import Evaluator
-from config.logging import SingleLogger
-
-
-class LoggerLogCallback(TrainerCallback):
-    def on_log(self, args, state, control, logs=None, **kwargs):
-        control.should_log = False
-        _ = logs.pop("total_flos", None)
-        if state.is_local_process_zero:
-            SingleLogger().getLogger().info(logs)
+from config.logging import SingleLogger, LoggerLogCallback
 
 class FineTuning:
     """실제 Fine Tuning 훈련을 진행한다.
@@ -101,12 +93,13 @@ class FineTuning:
 
         self.LOGGER.info("파인 튜닝 트레이너 세팅 완료 및 훈련 시작")
         trainer = Trainer(
-            model = AutoModelForQuestionAnswering(CONF['model'][mode]['name']), 
+            model = AutoModelForQuestionAnswering.from_pretrained(CONF['model'][mode]['name']), 
             args = args,
             train_dataset=self.__get_dataset('train') if mode == 'train' else None,
             eval_dataset=self.__get_dataset('validation') if mode == 'train' else None,
             tokenizer=self.preprocessor.tokenizer if mode == 'train' else None,
         )
+
         trainer.add_callback(LoggerLogCallback())
 
         if mode == 'train':
