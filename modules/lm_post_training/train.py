@@ -2,14 +2,9 @@ import os
 import sys
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))))
 
-import yaml
-
-
-    
 from modules.config.logging import SingleLogger, logging
 from modules.config.TqdmToLogger import TqdmToLogger
 import torch
-from transformers import AdamW
 from tqdm import tqdm
 from transformers import BertForPreTraining
 from torch.utils.data import DataLoader
@@ -23,7 +18,6 @@ if __name__ == '__main__':
     #     conf = yaml.safe_load(f)
     SingleLogger().setLogger('train')
     LOGGER = SingleLogger().getLogger()
-    print(LOGGER)
 
     LOGGER.info('================== NEW TASK ======================')
 
@@ -83,7 +77,7 @@ if __name__ == '__main__':
     model.train() # 모델 훈련 모드
 
     # 옵티마이저 세팅
-    optim = AdamW(model.parameters(), lr=5e-5)
+    optim = torch.optim.AdamW(model.parameters(), lr=5e-5)
     epochs = CONF["parameters"]["epochs"]
 
     # 훈련(Pre-training)
