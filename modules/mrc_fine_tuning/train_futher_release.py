@@ -2,13 +2,20 @@ import os
 import sys
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))))
 
-from transformers import TrainingArguments, Trainer
+from transformers import TrainingArguments, Trainer, TrainerCallback
 from datasets import load_dataset
 from modules.loader import conf_ft as CONF
 from modules.mrc_fine_tuning.preprocessor import Preprocessor
 from modules.mrc_fine_tuning.evaluator import Evaluator
 from config.logging import SingleLogger
-from transformers.utils import logging
+
+
+class LoggerLogCallback(TrainerCallback):
+    def on_log(self, args, state, control, logs=None, **kwargs):
+        control.should_log = False
+        _ = logs.pop("total_flos", None)
+        if state.is_local_process_zero:
+            SingleLogger().getLogger().info(logs)
 
 class FineTuning:
     """실제 Fine Tuning 훈련을 진행한다.
@@ -59,7 +66,7 @@ class FineTuning:
         
         주의점: mode는 train과 아닌것으로 구분된다.
         """
-        self.LOGGER.info("파인 튜닝 시작")
+        self.LOGGER.info("파인 튜닝 시작")  
         self.mrc_dataset = self.__load_dataset()
 
         if mode == 'train':
@@ -77,8 +84,8 @@ class FineTuning:
                 fp16=CONF['parameters']['fp16'],
                 push_to_hub=CONF['parameters']['push_to_hub'],
 
-                logging_dir='./logs',
-                logging_steps=200,
+                logging_dir='./logs',   
+                logging_steps=1,
             )
         else:
             args = TrainingArguments(
@@ -89,7 +96,7 @@ class FineTuning:
                 per_device_eval_batch_size = CONF['parameters']['eval_batch'],
 
                 logging_dir='./logs',
-                logging_steps=200,
+                logging_steps=1,
             )
 
         self.LOGGER.info("파인 튜닝 트레이너 세팅 완료 및 훈련 시작")
@@ -101,6 +108,7 @@ class FineTuning:
             eval_dataset=self.__get_dataset('validation') if mode == 'train' else None,
             tokenizer=self.preprocessor.tokenizer if mode == 'train' else None,
         )
+        trainer.add_callback(LoggerLogCallback())
 
         if mode == 'train':
             trainer.train()
