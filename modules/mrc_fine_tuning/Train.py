@@ -1,12 +1,8 @@
-import os
-import sys
-sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))))
-
 from transformers import TrainingArguments, Trainer
 from datasets import load_dataset
 from modules.main import CONF_FT as CONF # 안쓰는 파일이라 안고침
-from modules.mrc_fine_tuning.preprocessor import Preprocessor
-from modules.mrc_fine_tuning.evaluator import Evaluator
+from .preprocessor import Preprocessor
+from .evaluator import Evaluator
 
 def setUp():
     fine_tuning_module = Preprocessor(conf=CONF, mode=CONF['parameters']['exec'])

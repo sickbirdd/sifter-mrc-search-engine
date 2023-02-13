@@ -1,16 +1,12 @@
 import re
+import os
 import json
 import copy
 import torch
 import random
 from pathlib import Path
 from transformers import AutoTokenizer
-
-import os
-import sys
-sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))))
-
-from modules.config.logging import SingleLogger
+from config.logging import SingleLogger
 LOGGER = SingleLogger().getLogger()
 
 class NSPMode:

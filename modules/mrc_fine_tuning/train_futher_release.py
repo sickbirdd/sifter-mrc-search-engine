@@ -1,11 +1,7 @@
-import os
-import sys
-sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))))
-
 from transformers import TrainingArguments, Trainer, AutoModelForQuestionAnswering
 from datasets import load_dataset
-from modules.mrc_fine_tuning.preprocessor import Preprocessor
-from modules.mrc_fine_tuning.evaluator import Evaluator
+from .preprocessor import Preprocessor
+from .evaluator import Evaluator
 from config.logging import SingleLogger, LoggerLogCallback
 
 class FineTuning:

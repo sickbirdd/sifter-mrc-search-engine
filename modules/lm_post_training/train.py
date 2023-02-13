@@ -1,17 +1,11 @@
-import os
-import sys
-sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))))
-
 import torch
 from tqdm import tqdm
 from transformers import BertForPreTraining
 from torch.utils.data import DataLoader
-from modules.lm_post_training.dataset import MeditationsDataset
-from modules.lm_post_training.preprocessor import Preprocessor
-from transformers import BertForPreTraining
-from modules.config.TqdmToLogger import TqdmToLogger
-from modules.config.logging import SingleLogger, logging
-from modules.lm_post_training.preprocessor import Preprocessor
+from .dataset import MeditationsDataset
+from .preprocessor import Preprocessor
+from config.TqdmToLogger import TqdmToLogger
+from config.logging import SingleLogger, logging
 
 def train(CONF):
     # with open('modules/config.yaml') as f:
