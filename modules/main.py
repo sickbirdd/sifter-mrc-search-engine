@@ -4,8 +4,8 @@ import yaml
 import logging
 from lm_post_training.train import train
 from mrc_fine_tuning.train_futher_release import FineTuning
-from config.logging import SingleLogger
-sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
+# from config.logging import SingleLogger
+# sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
 if __name__ == '__main__':
     print("Main Module Execute")
