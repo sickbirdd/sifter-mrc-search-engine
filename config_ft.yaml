@@ -23,3 +23,5 @@ dataset:
   training_path: squad_kor_v1
   raw_path: datasets/mrc_fine_tuning/raw/TL_span_extraction.json
   test_path: datasets/mrc_fine_tuning/test/sports_domain_test.json
+log:
+  steps: 500

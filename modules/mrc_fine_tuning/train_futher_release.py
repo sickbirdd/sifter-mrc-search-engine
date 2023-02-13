@@ -74,10 +74,7 @@ class FineTuning:
                 num_train_epochs=self.CONF['parameters']['epochs'],
                 weight_decay=self.CONF['parameters']['weight_decay'],
                 fp16=self.CONF['parameters']['fp16'],
-                push_to_hub=self.CONF['parameters']['push_to_hub'],
-                
-                logging_dir='./logs',   
-                logging_steps=1,
+                push_to_hub=self.CONF['parameters']['push_to_hub']
             )
         else:
             args = TrainingArguments(
@@ -85,11 +82,11 @@ class FineTuning:
                 overwrite_output_dir = True,
                 do_train = False,
                 do_predict = True,
-                per_device_eval_batch_size = self.CONF['parameters']['eval_batch'],
-
-                logging_dir='./logs',   
-                logging_steps=100,
+                per_device_eval_batch_size = self.CONF['parameters']['eval_batch']
             )
+        args.optim="adamw_torch"
+        args.logging_dir='./logs'
+        args.logging_steps=self.CONF['log']['steps']
 
         self.LOGGER.info("파인 튜닝 트레이너 세팅 완료 및 훈련 시작")
         trainer = Trainer(
@@ -97,7 +94,7 @@ class FineTuning:
             args = args,
             train_dataset=self.__get_dataset('train') if mode == 'train' else None,
             eval_dataset=self.__get_dataset('validation') if mode == 'train' else None,
-            tokenizer=self.preprocessor.tokenizer if mode == 'train' else None,
+            tokenizer=self.preprocessor.tokenizer if mode == 'train' else None, 
             callbacks=[LoggerLogCallback()],
         )
 
