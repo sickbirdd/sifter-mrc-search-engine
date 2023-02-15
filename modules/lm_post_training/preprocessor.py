@@ -6,7 +6,7 @@ import torch
 import random
 from pathlib import Path
 from transformers import AutoTokenizer
-from config.logging import SingleLogger
+from utils.logging import SingleLogger
 LOGGER = SingleLogger().getLogger()
 
 class NSPMode:

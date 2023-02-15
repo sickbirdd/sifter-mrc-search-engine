@@ -12,10 +12,12 @@ import os
 import sys
 import yaml
 import logging
-from lm_post_training.train import train
+from lm_post_training.train import Trainer
 from mrc_fine_tuning.train_futher_release import FineTuning
 import argparse
 from enum import Enum
+import torch
+from utils.logging import SingleLogger
 
 class ModuleName(Enum):
     post_training = 1
@@ -54,6 +56,7 @@ def main():
     group_post_training.add_argument('--dataset_path', type=str, default="datasets/lm_post_training/training/LabeledData", help="데이터 셋 경로(기본값: datasets/lm_post_training/training/LabeledData)")
     group_post_training.add_argument('--dataset_struct', type=str, default="named_entity/#/content/#/sentence", help="데이터 셋 구조(기본값: named_entity/#/content/#/sentence)")
     group_post_training.add_argument('--upload_pt', type=str, default="modules/lm_post_training/temp_model", help="Hugging Face 업로드 경로(업로드시 필요, 기본갑: modules/lm_post_training/temp_model")
+    group_post_training.add_argument('--save_pretrain_path', type=str, help="전처리 데이터셋 중간 저장 경로, 없을 시 해당 기능 사용 안함")
 
     group_fine_tuning = parser.add_argument_group('fine_tuning')
     group_fine_tuning.add_argument('--metric_type', type=str, default="squad", help="?(기본값: squad)")
@@ -84,7 +87,21 @@ def main():
 
     if args.type == 'post_training':
         print("POST_TRAINING")
-        train(CONF=args)
+
+        SingleLogger().setLogger('train')
+        trainer = Trainer(model_name=args.model_name, 
+                device= torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu'),
+                dataset_path=args.dataset_path,
+                dataset_struct=args.dataset_struct,
+                context_pair_size=args.context_pair_size,
+                epochs=args.epochs,
+                max_length=args.max_length,
+                batch_size=args.max_length,
+
+                preprocess_dataset_path = args.save_pretrain_path
+                )
+        trainer.fit()
+
     elif args.type == 'fine_tuning':
         print("FINE_TUNING")
         FineTuning(CONF=args).fine_tuning_trainer('train')

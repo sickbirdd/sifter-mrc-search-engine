@@ -2,7 +2,7 @@ from transformers import TrainingArguments, Trainer, AutoModelForQuestionAnsweri
 from datasets import load_dataset
 from .preprocessor import Preprocessor
 from .evaluator import Evaluator
-from config.logging import SingleLogger, LoggerLogCallback
+from utils.logging import SingleLogger, LoggerLogCallback
 
 class FineTuning:
     """실제 Fine Tuning 훈련을 진행한다.
