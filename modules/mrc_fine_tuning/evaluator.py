@@ -11,9 +11,9 @@ class Evaluator:
         
     """
     def __init__(self, conf) -> None:
-        self.__metric = load(conf['metric_type'])
-        self.__nBest = conf['n_best']
-        self.__max_answer_length = conf['max_answer_length']
+        self.__metric = load(conf.metric_type)
+        self.__nBest = conf.n_best
+        self.__max_answer_length = conf.max_answer_length
     
     def compute_metrics(self, start_logits, end_logits, features, examples):
         """ 모델 평가 메트릭 함수

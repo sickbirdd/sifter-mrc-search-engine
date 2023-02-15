@@ -13,8 +13,8 @@ class FineTuning:
     """
     def __init__(self, CONF) -> None:
         self.CONF = CONF
-        self.preprocessor = Preprocessor(conf=self.CONF, mode=self.CONF['parameters']['exec'])
-        self.evaluation = Evaluator(conf=self.CONF['parameters'])
+        self.preprocessor = Preprocessor(conf=self.CONF)
+        self.evaluation = Evaluator(conf=self.CONF)
         self.LOGGER = SingleLogger().setFileogger(logger_name='train-ft', file_name="train-ft.log", level="INFO")
 
     def __get_dataset(self, dataset):
@@ -43,7 +43,7 @@ class FineTuning:
         """데이터 셋이 없으면 저장"""
         cls = type(self)
         if not hasattr(cls, "self.__mrc_dataset"):
-            self.__mrc_dataset = load_dataset(self.CONF['dataset']['training_path'])
+            self.__mrc_dataset = load_dataset(self.CONF.training_path)
             self.LOGGER.info("데이터 셋이 설정되었습니다.")
 
 
@@ -61,32 +61,32 @@ class FineTuning:
             # 훈련 및 평가 동시 진행
             # 모델을 저장하려면 push_to_hub = True와 로그인을 위한 개인 토큰 필요
             args = TrainingArguments(
-                self.CONF['model']['upload'],
+                self.CONF.upload_ft,
                 evaluation_strategy="no",
                 save_strategy="epoch",
-                per_device_train_batch_size=self.CONF['parameters']['train_batch'],
-                per_device_eval_batch_size=self.CONF['parameters']['eval_batch'],
-                learning_rate=self.CONF['parameters']['learning_rate'],
-                num_train_epochs=self.CONF['parameters']['epochs'],
-                weight_decay=self.CONF['parameters']['weight_decay'],
-                fp16=self.CONF['parameters']['fp16'],
-                push_to_hub=self.CONF['parameters']['push_to_hub']
+                per_device_train_batch_size=self.CONF.train_batch,
+                per_device_eval_batch_size=self.CONF.eval_batch,
+                learning_rate=self.CONF.learning_rate,
+                num_train_epochs=self.CONF.epochs,
+                weight_decay=self.CONF.weight_decay,
+                fp16=self.CONF.fp16,
+                push_to_hub=self.CONF.push_to_hub
             )
         else:
             args = TrainingArguments(
-                self.CONF['model']['upload'],
+                self.CONF.upload_ft,
                 overwrite_output_dir = True,
                 do_train = False,
                 do_predict = True,
-                per_device_eval_batch_size = self.CONF['parameters']['eval_batch']
+                per_device_eval_batch_size = self.CONF.eval_batch
             )
         args.optim="adamw_torch"
         args.logging_dir='./logs'
-        args.logging_steps=self.CONF['log']['steps']
+        args.logging_steps=500
 
         self.LOGGER.info("파인 튜닝 트레이너 세팅 완료 및 훈련 시작")
         trainer = Trainer(
-            model = AutoModelForQuestionAnswering.from_pretrained(self.CONF['model'][mode]['name']), 
+            model = AutoModelForQuestionAnswering.from_pretrained(self.CONF.model_name), 
             args = args,
             train_dataset=self.__get_dataset('train') if mode == 'train' else None,
             eval_dataset=self.__get_dataset('validation') if mode == 'train' else None,
