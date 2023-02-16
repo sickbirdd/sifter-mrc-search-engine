@@ -11,6 +11,7 @@ import os
 import time
 
 class Trainer:
+    """Post-Training 훈련 과정"""
     def __init__(self, model_name: str, device: str, dataset_path, dataset_struct, context_pair_size: int,
                      epochs: int, max_length: int, batch_size: int, preprocess_dataset_path: str) -> None:
         self.device = device
@@ -25,6 +26,7 @@ class Trainer:
         self.batch_size = batch_size
 
     def preprocess(self):
+        """전처리기를 사용하여 데이터를 전처리한다."""
         LOGGER = SingleLogger().getLogger()
 
         #JSON 데이터 추출
@@ -67,7 +69,8 @@ class Trainer:
 
         return mask_data
 
-    def get_preprocessor_dataset(self):
+    def get_preprocess_dataset(self):
+        """저장된 전처리 데이터가 존재하면 불러오고 없는 경우 전처리 후 데이터를 저장한다."""
         LOGGER = SingleLogger().getLogger()
         if self.preprocess_dataset_path == None:
             return self.preprocess()
@@ -99,12 +102,13 @@ class Trainer:
 
 
     def fit(self):
+        """모델을 훈련한다."""
         LOGGER = SingleLogger().getLogger()
 
         LOGGER.info("================== NEW TASK ======================")
 
         # 전처리된 훈련 데이터셋 준비
-        mask_data = self.get_preprocessor_dataset()
+        mask_data = self.get_preprocess_dataset()
 
         # 배치 사이즈만큼 데이터 로딩 
         loader = DataLoader(MeditationsDataset(mask_data), batch_size=self.batch_size, shuffle=True)
@@ -149,8 +153,5 @@ class Trainer:
                 loop.set_description(f'Epoch {epoch}')
                 loop.set_postfix(loss=loss.item())
         LOGGER.info("훈련이 완료되었습니다.")
-        self.model.save_pretrained(save_directory=self.upload_pt)
-        self.preprocessor.save_pretrained(self.upload_pt)
 
-    def save_processed_dataset(self):
-        pass
+        self.model.save_pretrained(save_directory=self.upload_pt)
