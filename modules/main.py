@@ -83,7 +83,7 @@ def main():
                 max_length=args.max_length,
                 batch_size=args.max_length,
 
-                preprocess_dataset_path = args.save_pretrain_path
+                preprocess_dataset_path = args.save_pretrain_path,
                 upload_pt=args.upload_pt
                 )
         trainer.fit()
