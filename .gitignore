@@ -190,3 +190,6 @@ docs/Makefile
 
 # 모델 및 토크나이저 파일
 modules/lm_post_training/temp_model
+
+# 전처리 중간 저장
+*.p

@@ -5,7 +5,7 @@ class Preprocessor:
     학습 & 평가 데이터셋에 대한 전처리 기능이 있습니다.
     
     Attributes:
-        conf (dict): 설정 파일
+        conf (dict): 설정 인자
         
         mode (string): 훈련 or 평가 선택
         
@@ -20,10 +20,10 @@ class Preprocessor:
         
         stride = 슬라이딩 윈도우 길이
     """
-    def __init__(self, conf, mode) -> None:
-        self.tokenizer = AutoTokenizer.from_pretrained(conf['model'][mode]['name'])
-        self.__max_length = conf['parameters']['max_length']
-        self.__stride = conf['parameters']['stride']
+    def __init__(self, conf) -> None:
+        self.tokenizer = AutoTokenizer.from_pretrained(conf.model_name)
+        self.__max_length = conf.max_length
+        self.__stride = conf.stride
     
     def preprocess_training_examples(self, examples):
         """ 학습 데이터셋에 대한 전처리
