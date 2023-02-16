@@ -14,7 +14,7 @@ from utils.logging import SingleLogger
 import os
 import sys
 from lm_post_training.train import Trainer
-from mrc_fine_tuning.train_futher_release import FineTuning
+from mrc_fine_tuning.train import FineTuning
 import argparse
 from enum import Enum
 import torch
