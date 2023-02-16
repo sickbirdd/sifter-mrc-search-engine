@@ -179,63 +179,6 @@ class Preprocessor:
         """
         return self._context_size
     
-    def _context_finder(self, context_dict_and_list, data_DOM, deep):
-        """ Dict과 List로 이루어진 데이터 구조에서 특정 값 찾기
-
-        JSON을 포함한 Dict과 List로 이루어진 구조체에서 찾길 원하는 데이터 위치를 받아 해당 데이터를 리스트로 반환해 주는 내부
-        .. warning:: 3차원 이상 구조체에서는 다른 전처리기 함수와 호환되지 않는다.
-        
-        Args:
-            context_dict_and_list (dict): 원본 데이터 구조체
-            data_DOM (list): 찾고자 하는 위치 - ex) ["root", "child1", "#", "child2", "target"] "#"은 리스트를 의미한다.
-            deep (int): 단순한 1차 리스트를 내부 형식 구조에 맞게 맞추기 위한 깊이
-
-        Returns:
-            list: 2차원 이상 값 리스트
-        """
-        if len(data_DOM) == 0:
-            return 1, context_dict_and_list if deep == 0 else [context_dict_and_list]
-        
-        if data_DOM[0] == '#':
-            result = []
-            sum = 0
-            for list_component in context_dict_and_list:
-                context_count, context_list = self._context_finder(list_component, data_DOM[1:], deep - 1)
-                sum += context_count
-                result.append(context_list)
-            return sum, result
-        else:
-            return self._context_finder(context_dict_and_list.get(data_DOM[0]), data_DOM[1:], deep)
-            
-    def read_data(self, data_path, data_DOM, data_format = ".json"):
-        """ 데이터 경로에서 특정 확장자로 구성된 데이터를 모두 읽는다
-
-        데이터가 존재하는 경로안의 파일에서 읽기 원하는 확장자를 받아 읽은 모든 JSON을 포함한 Dict과 List로 이루어진 
-        구조체와 찾길 원하는 데이터 위치를 전달해 해당 데이터를 리스트로 반환한 값과 길이를 저장한다.
-        
-        ..warning:: 
-            JSON 이외의 파일 확장자는 호환되지 않음.
-        
-        Args:
-            data_path (str): 데이터가 있는 폴더의 경로
-            data_DOM (list): 찾고자 하는 위치 - ex) ["root", "child1", "#", "child2", "target"] "#"은 리스트를 의미한다.
-            data_format (str, optional): 찾고자 하는 확장자 명. 디폴트 값은 ".json".
-
-        """
-        data_path = Path(data_path)
-        
-        for (root, _, files) in os.walk(data_path):
-            for file in files:
-                # TODO: dataFormat 여러개를 받아야할 때 처리 -> dataFormat을 list로 받아 밑의 코드 여러번 수행?
-                if data_format in file:
-                    file_path = os.path.join(root, file)
-                    with open(file_path, 'rb') as f:
-                        in_dict = json.load(f)
-                    context_size, context_list = self._context_finder(in_dict, data_DOM, 2)
-                    self._data.extend(context_list)
-                    self._size = self._size + len(context_list)
-                    self._context_size += context_size
-        
     def remove_special_characters(self, sentence):
         """ 토큰화 과정 전에 데이터셋을 정제하기 위한 함수
         
@@ -299,6 +242,68 @@ class Preprocessor:
         for method in clean_methods:
             sentence = method(sentence)
         return sentence
+
+    def _context_finder(self, context_dict_and_list, data_DOM, deep):
+        """ Dict과 List로 이루어진 데이터 구조에서 특정 값 찾기
+
+        JSON을 포함한 Dict과 List로 이루어진 구조체에서 찾길 원하는 데이터 위치를 받아 해당 데이터를 리스트로 반환해 주는 내부
+        .. warning:: 3차원 이상 구조체에서는 다른 전처리기 함수와 호환되지 않는다.
+        
+        Args:
+            context_dict_and_list (dict): 원본 데이터 구조체
+            data_DOM (list): 찾고자 하는 위치 - ex) ["root", "child1", "#", "child2", "target"] "#"은 리스트를 의미한다.
+            deep (int): 단순한 1차 리스트를 내부 형식 구조에 맞게 맞추기 위한 깊이
+
+        Returns:
+            list: 2차원 이상 값 리스트
+        """
+        if len(data_DOM) == 0:
+            sentence = self.remove_special_characters(context_dict_and_list)
+            # 글자 수가 5개 이하인 문장은 제외
+            if len(sentence) <= 5: 
+                return 0, None
+            return 1, sentence if deep == 0 else [sentence]
+        
+        if data_DOM[0] == '#':
+            result = []
+            sum = 0
+            for list_component in context_dict_and_list:
+                context_count, context_list = self._context_finder(list_component, data_DOM[1:], deep - 1)
+                sum += context_count
+                if context_list != None:
+                    result.append(context_list)
+            return sum, result
+        else:
+            return self._context_finder(context_dict_and_list.get(data_DOM[0]), data_DOM[1:], deep)
+            
+    def read_data(self, data_path, data_DOM, data_format = ".json"):
+        """ 데이터 경로에서 특정 확장자로 구성된 데이터를 모두 읽는다
+
+        데이터가 존재하는 경로안의 파일에서 읽기 원하는 확장자를 받아 읽은 모든 JSON을 포함한 Dict과 List로 이루어진 
+        구조체와 찾길 원하는 데이터 위치를 전달해 해당 데이터를 리스트로 반환한 값과 길이를 저장한다.
+        
+        ..warning:: 
+            JSON 이외의 파일 확장자는 호환되지 않음.
+        
+        Args:
+            data_path (str): 데이터가 있는 폴더의 경로
+            data_DOM (list): 찾고자 하는 위치 - ex) ["root", "child1", "#", "child2", "target"] "#"은 리스트를 의미한다.
+            data_format (str, optional): 찾고자 하는 확장자 명. 디폴트 값은 ".json".
+
+        """
+        data_path = Path(data_path)
+        
+        for (root, _, files) in os.walk(data_path):
+            for file in files:
+                # TODO: dataFormat 여러개를 받아야할 때 처리 -> dataFormat을 list로 받아 밑의 코드 여러번 수행?
+                if data_format in file:
+                    file_path = os.path.join(root, file)
+                    with open(file_path, 'rb') as f:
+                        in_dict = json.load(f)
+                    context_size, context_list = self._context_finder(in_dict, data_DOM, 2)
+                    self._data.extend(context_list)
+                    self._size = self._size + len(context_list)
+                    self._context_size += context_size
     
     def _get_random_sentence(self, except_index, size = 1):
         """ 무작위 문장 선별: NSP sub function

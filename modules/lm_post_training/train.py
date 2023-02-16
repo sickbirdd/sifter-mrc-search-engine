@@ -43,24 +43,24 @@ class Trainer:
         train_contexts = self.preprocessor.next_sentence_prediction(self.context_pair_size)
         LOGGER.info("NSP 문장 쌍 생성 완료")
 
-        # 데이터 정제
-        refine_datas = {"first":[], "second":[], "labels":[]}
+        # NSP 데이터 구조 변경
+        nsp_data = {"first":[], "second":[], "labels":[]}
         for train_context in train_contexts:
-            refine_datas['first'].append(self.preprocessor.remove_special_characters(train_context['first']))
-            refine_datas['second'].append(self.preprocessor.remove_special_characters(train_context['second']))
-            refine_datas['labels'].append(train_context['label'])
-        LOGGER.info("데이터 정제 완료")
+            nsp_data['first'].append(train_context['first'])
+            nsp_data['second'].append(train_context['second'])
+            nsp_data['labels'].append(train_context['label'])
+        LOGGER.info("NSP 변환 완료")
         
         # 데이터 토크나이징 (토큰 -> id)
-        token_data = self.preprocessor.tokenizer(refine_datas['first'],
-                                                    refine_datas['second'],
+        token_data = self.preprocessor.tokenizer(nsp_data['first'],
+                                                    nsp_data['second'],
                                                     add_special_tokens=True,
                                                     truncation=True,
                                                     max_length=self.max_length,
                                                     padding="max_length",
                                                     return_tensors="pt"
                                                     )
-        token_data['next_sentence_label'] = torch.LongTensor(refine_datas['labels'])
+        token_data['next_sentence_label'] = torch.LongTensor(nsp_data['labels'])
         LOGGER.info("토크나이징 완료")
 
         # 마스킹
