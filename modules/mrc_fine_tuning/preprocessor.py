@@ -5,7 +5,7 @@ class Preprocessor:
     학습 & 평가 데이터셋에 대한 전처리 기능이 있습니다.
     
     Attributes:
-        conf (dict): 설정 파일
+        conf (dict): 설정 인자
         
         mode (string): 훈련 or 평가 선택
         

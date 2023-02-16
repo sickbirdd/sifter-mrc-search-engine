@@ -8,36 +8,24 @@ MRC 모델을 훈련하기 위한 프로그램
 * EVALUATION MODEL
 """
 
-import os
-import sys
 import yaml
 import logging
+from utils.logging import SingleLogger
+import os
+import sys
 from lm_post_training.train import Trainer
 from mrc_fine_tuning.train_futher_release import FineTuning
 import argparse
 from enum import Enum
 import torch
-from utils.logging import SingleLogger
 
 class ModuleName(Enum):
     post_training = 1
     fine_tuning = 2
+    eval = 3
 
 def main():
     print("Main Module Execute")
-
-    with open('config_pt.yaml') as f:
-        """ 설정 파일 중 post-training 관련 설정 파일의 정보를 불러와 설정한다."""
-        CONF_PT = yaml.safe_load(f)
-
-    with open('config_ft.yaml') as f:
-        """ 설정 파일 중 fine-tuning 관련 설정 파일의 정보를 불러와 설정한다."""
-        CONF_FT = yaml.safe_load(f)
-        
-    with open('config_log.yaml') as f:
-        """ 설정 파일 중 log 관련 설정 파일의 정보를 불러와 설정한다."""
-        CONF_LOG = yaml.safe_load(f)
-
     parser = argparse.ArgumentParser(prog=os.path.basename(sys.argv[0]),
                                      formatter_class=argparse.RawDescriptionHelpFormatter,
                                      description=__doc__)
@@ -55,7 +43,7 @@ def main():
     group_post_training.add_argument('--batch_size', type=int, default=16, help="배치 크기(기본값: 16)")
     group_post_training.add_argument('--dataset_path', type=str, default="datasets/lm_post_training/training/LabeledData", help="데이터 셋 경로(기본값: datasets/lm_post_training/training/LabeledData)")
     group_post_training.add_argument('--dataset_struct', type=str, default="named_entity/#/content/#/sentence", help="데이터 셋 구조(기본값: named_entity/#/content/#/sentence)")
-    group_post_training.add_argument('--upload_pt', type=str, default="modules/lm_post_training/temp_model", help="모델 저장 경로(기본갑: modules/lm_post_training/temp_model")
+    group_post_training.add_argument('--upload_pt', type=str, default="modules/lm_post_training/temp_model", help="모델 저장 경로 (기본갑: modules/lm_post_training/temp_model")
     group_post_training.add_argument('--save_pretrain_path', type=str, help="전처리 데이터셋 중간 저장 경로, 없을 시 해당 기능 사용 안함")
 
     group_fine_tuning = parser.add_argument_group('fine_tuning')
@@ -78,17 +66,15 @@ def main():
     group_fine_tuning.add_argument('--test_path', type=str, default="datasets/mrc_fine_tuning/test/sports_domain_test.json", help="ft-dataset-test_path(기본값: datasets/mrc_fine_tuning/test/sports_domain_test.json)")
     group_fine_tuning.add_argument('--mode', type=str, default="train", help="훈 련 모 드 t r a i n, e v a l(기본값: train)")
 
-
     args = parser.parse_args()
 
-    # 설정파일에서 로거 정보를 불러와 세팅한다.
-    logging.config.dictConfig(CONF_LOG)
-    
+    with open('config_log.yaml') as f:
+        """ 설정 파일 중 log 관련 설정 파일의 정보를 불러와 설정한다."""
+        logging.config.dictConfig(yaml.safe_load(f))
+    SingleLogger().setLogger('train')
 
     if args.type == 'post_training':
         print("POST_TRAINING")
-
-        SingleLogger().setLogger('train')
         trainer = Trainer(model_name=args.model_name, 
                 device= torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu'),
                 dataset_path=args.dataset_path,
@@ -101,7 +87,6 @@ def main():
                 preprocess_dataset_path = args.save_pretrain_path
                 )
         trainer.fit()
-
     elif args.type == 'fine_tuning':
         print("FINE_TUNING")
         FineTuning(CONF=args).fine_tuning_trainer('train')

@@ -7,7 +7,6 @@ import random
 from pathlib import Path
 from transformers import AutoTokenizer
 from modules.utils.logging import SingleLogger
-LOGGER = SingleLogger().getLogger()
 
 class NSPMode:
     """ 다음 문장 예측 설정
@@ -23,8 +22,8 @@ class NSPMode:
         # no_dupplicatee: 모든 결과에서 유일한 문장 사용
         # only_first: 첫번째 문장만 유일한 문장 사용
         #TODO soft: 유일한 문장쌍 사용
-        self.__strage_list = set(["no_dupplicate", "only_first", "soft"])
-        self.__strategy = "no_dupplicate"
+        self._strage_list = set(["no_dupplicate", "only_first", "soft"])
+        self._strategy = "no_dupplicate"
 
     def get_strategy_list(self):
         """ 현재 가능한 생성 전략 리스트를 반환한다.
@@ -32,7 +31,7 @@ class NSPMode:
         Returns:
             list: 생성 전략 리스트
         """
-        return self.__strageList
+        return self._strageList
 
     def get_strategy(self):
         """ 현재 생성 전략을 반환한다.
@@ -40,7 +39,7 @@ class NSPMode:
         Returns:
             String: 현재 생성 전략
         """
-        return self.__strategy
+        return self._strategy
 
     def set_strategy(self, strategy):
         """ 생성 전략을 설정한다.
@@ -51,8 +50,8 @@ class NSPMode:
         Returns:
             boolean: 성공 시 `True`, 실패 시 `False`
         """
-        if strategy in self.__strage_list:
-            self.__strategy = strategy
+        if strategy in self._strage_list:
+            self._strategy = strategy
             return True
         else:
             return False
@@ -66,12 +65,12 @@ class NSPDataset:
         vector_type(string): 내부 데이터 구조   
     """
     def __init__(self, vector_type = "Dict") -> None:
-        self.__vector_mode = ["Dict", "Set"]
-        if not vector_type in self.__vector_mode:
+        self._vector_mode = ["Dict", "Set"]
+        if not vector_type in self._vector_mode:
             raise Exception("허용되지 않은 vector_type입니다. : ['Dict', 'Set']")
 
         self.vector_type = vector_type
-        self.__list = dict() if vector_type == "Dict" else set()
+        self._list = dict() if vector_type == "Dict" else set()
     
     def is_used(self, index, stn_index, index_s = "", stn_index_s = ""):
         """ 사용 여부 검사
@@ -82,9 +81,9 @@ class NSPDataset:
             boolean: 사용한 경우 `True` 아닐 경우 `False`
         """
         if self.vector_type == "Dict":
-            return index in self.__list and (stn_index in self.__list[index] or "*" in self.__list[index])
+            return index in self._list and (stn_index in self._list[index] or "*" in self._list[index])
         elif self.vector_type == "Set":
-            return [index, stn_index, index_s, stn_index_s] in self.__list
+            return [index, stn_index, index_s, stn_index_s] in self._list
 
     def add_list(self, index, stn_index):
         """ 사용한 값 저장
@@ -93,9 +92,9 @@ class NSPDataset:
             index (int): 기사 id
             stn_index (int): 문장 id
         """
-        if not index in self.__list:
-            self.__list[index] = set()
-        self.__list[index].add(stn_index)
+        if not index in self._list:
+            self._list[index] = set()
+        self._list[index].add(stn_index)
 
     def add_set(self, index_f, stn_index_f, index_s, stn_index_s):
         """ 사용한 값 저장
@@ -106,7 +105,7 @@ class NSPDataset:
             index_s (int): 기사2 id
             stn_index_s (int): 문장2 id
         """
-        self.__list.add([index_f, stn_index_f, index_s, stn_index_s])
+        self._list.add([index_f, stn_index_f, index_s, stn_index_s])
     
     def remove_list(self, index, stn_index):
         """ 사용한 값 삭제
@@ -115,8 +114,8 @@ class NSPDataset:
             index (int): 기사 id
             stn_index (int): 문장 id
         """
-        if index in self.__list and stn_index in self.__list[index]:
-            self.__list[index].remove(stn_index)      
+        if index in self._list and stn_index in self._list[index]:
+            self._list[index].remove(stn_index)      
 
 class Preprocessor: 
     """전처리를 담당하는 객체이다.
@@ -142,17 +141,17 @@ class Preprocessor:
     """
     def __init__(self, model_name) -> None:
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.__data = []
-        self.__size = 0
-        self.__context_size = 0
+        self._data = []
+        self._size = 0
+        self._context_size = 0
         self.nsp_mode = NSPMode()
     
     #데이터만 모두 초기화한다.
     def clear(self):
         """ 전처리 객채에 저장된 데이터 모두 삭제한다."""
-        self.__data = []
-        self.__size = 0
-        self.__context_size = 0
+        self._data = []
+        self._size = 0
+        self._context_size = 0
 
     def get_raw_data(self):
         """ 전처리 객채에 저장된 데이터를 반환한다.
@@ -160,7 +159,7 @@ class Preprocessor:
         Returns:
             list: 2차원 데이터 리스트 ex) [기사:[문장1, 문장2, ...], ...]
         """
-        return self.__data
+        return self._data
 
     def get_size(self):
         """ 전처리 객채에 저장된 기사 개수를 반환한다.
@@ -168,7 +167,7 @@ class Preprocessor:
         Returns:
             int: 기사 개수
         """
-        return self.__size
+        return self._size
     
     def get_context_size(self):
         """ 전처리 객채에 저장된 문장 개수를 반환한다.
@@ -176,9 +175,9 @@ class Preprocessor:
         Returns:
             int: 문장 개수
         """
-        return self.__context_size
+        return self._context_size
     
-    def __context_finder(self, context_dict_and_list, data_DOM, deep):
+    def _context_finder(self, context_dict_and_list, data_DOM, deep):
         """ Dict과 List로 이루어진 데이터 구조에서 특정 값 찾기
 
         JSON을 포함한 Dict과 List로 이루어진 구조체에서 찾길 원하는 데이터 위치를 받아 해당 데이터를 리스트로 반환해 주는 내부
@@ -199,12 +198,12 @@ class Preprocessor:
             result = []
             sum = 0
             for list_component in context_dict_and_list:
-                context_count, context_list = self.__context_finder(list_component, data_DOM[1:], deep - 1)
+                context_count, context_list = self._context_finder(list_component, data_DOM[1:], deep - 1)
                 sum += context_count
                 result.append(context_list)
             return sum, result
         else:
-            return self.__context_finder(context_dict_and_list.get(data_DOM[0]), data_DOM[1:], deep)
+            return self._context_finder(context_dict_and_list.get(data_DOM[0]), data_DOM[1:], deep)
             
     def read_data(self, data_path, data_DOM, data_format = ".json"):
         """ 데이터 경로에서 특정 확장자로 구성된 데이터를 모두 읽는다
@@ -230,10 +229,10 @@ class Preprocessor:
                     file_path = os.path.join(root, file)
                     with open(file_path, 'rb') as f:
                         in_dict = json.load(f)
-                    context_size, context_list = self.__context_finder(in_dict, data_DOM, 2)
-                    self.__data.extend(context_list)
-                    self.__size = self.__size + len(context_list)
-                    self.__context_size += context_size
+                    context_size, context_list = self._context_finder(in_dict, data_DOM, 2)
+                    self._data.extend(context_list)
+                    self._size = self._size + len(context_list)
+                    self._context_size += context_size
         
     def remove_special_characters(self, sentence):
         """ 토큰화 과정 전에 데이터셋을 정제하기 위한 함수
@@ -316,8 +315,8 @@ class Preprocessor:
             cnt = cnt + 1
 
             try:
-                index = random.randrange(0, self.__size)
-                stn_index = random.randrange(0, len(self.__data[index]) - size + 1)
+                index = random.randrange(0, self._size)
+                stn_index = random.randrange(0, len(self._data[index]) - size + 1)
                 if stn_index < 0:
                     continue
             except:
@@ -337,6 +336,7 @@ class Preprocessor:
         raise Exception("랜덤 문장 생성 실패: 시도 초과")
 
     def next_sentence_prediction(self, size) -> dict:
+        LOGGER = SingleLogger().getLogger()
         """ 다음 문장 예측 문장 쌍 생성
 
         사전 학습을 위한 다음 문장 예측에 사용할 문장 쌍과 그 관계를 가진 데이터셋을 만들어 주는 함수
@@ -372,8 +372,8 @@ class Preprocessor:
                     label = False
                 
                 step = dict()
-                sentence_f = self.__data[index_f][stn_index_f]
-                sentence_s = self.__data[index_s][stn_index_s]
+                sentence_f = self._data[index_f][stn_index_f]
+                sentence_s = self._data[index_s][stn_index_s]
                 step['first'] = sentence_f
                 step['second'] = sentence_s
                 step['label'] = label
