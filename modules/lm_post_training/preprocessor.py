@@ -254,35 +254,38 @@ class Preprocessor:
         """
     
         # 문장 시작과 끝 공백 제거
-        def strip_sentence(sentence):
+        def strip_sentence(sentence:str):
             return sentence.strip()
         
         # HTML 태그 제거
-        def sub_tag(sentence):
+        def sub_tag(sentence:str):
             return re.sub('<[^>]*>', '', sentence)
         
         # 이메일 주소 제거
-        def sub_email(sentence):
+        def sub_email(sentence:str):
             return re.sub('([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)', '', sentence)
         
         # URL 제거
-        def sub_URL(sentence):
+        def sub_URL(sentence:str):
             return re.sub('(http|ftp|https)://(?:[-\w.]|(?:%[\da-fA-F]{2}))+', '', sentence)
         
         # 꺽쇠 및 꺽쇠 안 문자 제거
-        def sub_bracket(sentence):
-            return re.sub(r'\<[^>]*\>', '', sentence)
+        def sub_bracket(sentence:str):
+            sentence.replace('(이름)', '')
+            sentence.replace('(이메일)', '')
+            sentence = re.sub(r'\<[^>]*\>', '', sentence)
+            return sentence
         
         # 자음 모음 제거
-        def sub_con_vow(sentence):
+        def sub_con_vow(sentence:str):
             return re.sub('([ㄱ-ㅎㅏ-ㅣ]+)', '', sentence)
         
         # 공백 여러 개 하나로 치환
-        def sub_blank(sentence):
+        def sub_blank(sentence:str):
             return ' '.join(sentence.split())
         
         # 세 번 이상 반복되는 문자 두 개로 치환
-        def sub_repeat_char(sentence):
+        def sub_repeat_char(sentence:str):
             p = re.compile('(([a-zA-Z0-9가-힣])\\2{2,})')
             result = p.findall(sentence)
             for r, _ in result:
@@ -290,7 +293,7 @@ class Preprocessor:
             return sentence
         
         # 특수문자 제거
-        def sub_noise(sentence):
+        def sub_noise(sentence:str):
             sentence = re.sub(r"[^\uAC00-\uD7A30-9a-zA-Z\s]", '', sentence)
             return sentence
         
