@@ -27,19 +27,19 @@ class PreprocessorTest(TestCase):
         self.data_DOM = "named_entity/#/content/#/sentence".split('/')
         
         LOGGER.info("1:---최초 생성 테스트---")
-        assert self.impl_preprocessor.get_size() == 0
-        assert self.impl_preprocessor.get_raw_data() == []
+        assert self.impl_preprocessor.size == 0
+        assert self.impl_preprocessor.data == []
         LOGGER.info("1:---최초 생성 테스트 완료---")
         LOGGER.info("2:---샘플 데이터 입력 테스트---")
         
         self.impl_preprocessor.read_data(data_path=self.data_path, data_DOM=self.data_DOM)
-        assert self.impl_preprocessor.get_size != 0
-        assert self.impl_preprocessor.get_raw_data() != []
-        assert len(self.impl_preprocessor.get_raw_data()) == self.impl_preprocessor.get_size()
+        assert self.impl_preprocessor.size != 0
+        assert self.impl_preprocessor.data != []
+        assert len(self.impl_preprocessor.data) == self.impl_preprocessor.size
         
-        LOGGER.info("현재 분류된 기사 개수: " + str(self.impl_preprocessor.get_size()))
-        LOGGER.info("현재 분류된 문장 개수: " + str(self.impl_preprocessor.get_context_size()))
-        LOGGER.info(self.impl_preprocessor.get_raw_data()[0])
+        LOGGER.info("현재 분류된 기사 개수: " + str(self.impl_preprocessor.size))
+        LOGGER.info("현재 분류된 문장 개수: " + str(self.impl_preprocessor.context_size))
+        LOGGER.info(self.impl_preprocessor.data[0])
         
         LOGGER.info("2:---샘플 데이터 입력 테스트 완료---")
         
@@ -64,7 +64,7 @@ class PreprocessorTest(TestCase):
     
     @Test("마스크")
     def test_masking(self):
-        sample_context = self.impl_preprocessor.get_raw_data()[0]
+        sample_context = self.impl_preprocessor.data[0]
         token_context = self.impl_preprocessor.tokenizer(sample_context)
         mask_context = self.impl_preprocessor.masking(token_context)
         # num = random.randrange(0, len(maskContext))
@@ -81,20 +81,21 @@ class PreprocessorTest(TestCase):
 
     @Test("NSP(다음 문장 예측)")
     def test_next_sentence_prediction(self):
-        if self.impl_preprocessor.get_size() == self.impl_preprocessor.get_context_size():
+        if self.impl_preprocessor.size == self.impl_preprocessor.context_size:
             LOGGER.warning('NSP 예측에 사용할 수 없는 데이터셋입니다.')
             return
 
-        context_size = self.impl_preprocessor.get_context_size()
+        context_size = self.impl_preprocessor.context_size
         
         #NSPmodule 기본값
         self.impl_preprocessor.nsp_mode.prob = 0.5
         self.assertEqual(self.impl_preprocessor.nsp_mode.prob, 0.5)
 
         # 잘못된 NSP 전략은 무시해야 한다
-        base_strategy = self.impl_preprocessor.nsp_mode.get_strategy()
-        self.assertFalse(self.impl_preprocessor.nsp_mode.set_strategy("no_strategy"))
-        self.assertEqual(self.impl_preprocessor.nsp_mode.get_strategy(), base_strategy)
+        base_strategy = self.impl_preprocessor.nsp_mode.strategy
+        with self.assertRaises(AssertionError):
+            self.impl_preprocessor.nsp_mode.strategy = "no_strategy"
+        self.assertEqual(self.impl_preprocessor.nsp_mode.strategy, base_strategy)
 
 
         test_size = context_size // 5
@@ -140,7 +141,7 @@ class PreprocessorTest(TestCase):
         # 다양한 문장 선택 전략 테스트
         # OnlyFirst는 오직 첫번째 문장(판별 대상 기본 문장) 기준으로 중복을 검사합니다.
         # 중복 여부 중요성이 적은 데이터를 여러번 사용하여 더 적은 데이터를 효과적으로 사용하기 위한 전략입니다.
-        self.assertTrue(self.impl_preprocessor.nsp_mode.set_strategy("only_first"))
+        self.impl_preprocessor.nsp_mode.strategy ="only_first"
         test_size = context_size // 5
         nsp_result = self.impl_preprocessor.next_sentence_prediction(test_size)
         
@@ -150,7 +151,7 @@ class PreprocessorTest(TestCase):
         # soft는 문장 쌍 기준으로 중복 여부를 검사합니다.
         # 데이터를 사용할 수 있는 모든 쌍 대상으로 검사하여 데이터가 한정적일때 많은 nsp 데이터를 생성할 수 있습니다.
         # TODO: 함수 구조 최적화 필요
-        # self.assertTrue(self.impl_preprocessor .nsp_mode.set_strategy("soft"))
+        # self.impl_preprocessor .nsp_mode.strategy ="soft"
         # test_size  = 100
         # nsp_result = self.impl_preprocessor .next_sentence_prediction(test_size )
         

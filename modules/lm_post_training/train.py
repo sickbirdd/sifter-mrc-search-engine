@@ -34,8 +34,8 @@ class Trainer:
         DATA_DOM = self.dataset_struct.split('/')
         self.preprocessor.read_data(data_path=DATA_PATH, data_DOM=DATA_DOM)
 
-        LOGGER.info("추출된 기사 개수: " + str(self.preprocessor.get_size()))
-        LOGGER.info("추출된 문장 개수: " + str(self.preprocessor.get_context_size()))
+        LOGGER.info("추출된 기사 개수: " + str(self.preprocessor.size))
+        LOGGER.info("추출된 문장 개수: " + str(self.preprocessor.context_size))
 
         # NSP
         LOGGER.info("훈련할 데이터쌍 개수: " + str(self.context_pair_size))

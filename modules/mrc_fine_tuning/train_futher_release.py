@@ -17,33 +17,33 @@ class FineTuning:
         self.evaluation = Evaluator(conf=self.CONF)
         self.LOGGER = SingleLogger().setFileogger(logger_name='train-ft', file_name="train-ft.log", level="INFO")
 
-    def __get_dataset(self, dataset):
+    def _get_dataset(self, dataset):
         """데이터 셋이 이미 있는 경우 해당 데이터셋을 반환 아닌 경우 데이터셋을 정제해서 저장
 
         주의점: dataset은 train과 아닌 것으로 구분된다.
         """
         cls = type(self)
-        if not hasattr(cls, "self.__" + str(dataset) + "_dataset"):
-            dataset = self.__mrc_dataset[dataset].map(
+        if not hasattr(cls, "self._" + str(dataset) + "_dataset"):
+            dataset = self._mrc_dataset[dataset].map(
                 self.preprocessor.preprocess_training_examples,
                 batched=True,
-                remove_columns=self.__mrc_dataset[dataset].column_names,
+                remove_columns=self._mrc_dataset[dataset].column_names,
             )
             self.LOGGER.info(str(dataset) + " 데이터 셋이 설정되었습니다.")
             
             if dataset == 'train':
-                self.__train_dataset = dataset
+                self._train_dataset = dataset
             else:
-                self.__validation_dataset = dataset
+                self._validation_dataset = dataset
         
-        return self.__train_dataset if dataset == 'train' else self.__validation_dataset
+        return self._train_dataset if dataset == 'train' else self._validation_dataset
         
         
-    def __load_dataset(self):
+    def _load_dataset(self):
         """데이터 셋이 없으면 저장"""
         cls = type(self)
-        if not hasattr(cls, "self.__mrc_dataset"):
-            self.__mrc_dataset = load_dataset(self.CONF.training_path)
+        if not hasattr(cls, "self._mrc_dataset"):
+            self._mrc_dataset = load_dataset(self.CONF.training_path)
             self.LOGGER.info("데이터 셋이 설정되었습니다.")
 
 
@@ -55,7 +55,7 @@ class FineTuning:
         주의점: mode는 train과 아닌것으로 구분된다.
         """
         self.LOGGER.info("파인 튜닝 시작")  
-        self.mrc_dataset = self.__load_dataset()
+        self.mrc_dataset = self._load_dataset()
 
         if mode == 'train':
             # 훈련 및 평가 동시 진행
@@ -88,8 +88,8 @@ class FineTuning:
         trainer = Trainer(
             model = AutoModelForQuestionAnswering.from_pretrained(self.CONF.model_name), 
             args = args,
-            train_dataset=self.__get_dataset('train') if mode == 'train' else None,
-            eval_dataset=self.__get_dataset('validation') if mode == 'train' else None,
+            train_dataset=self._get_dataset('train') if mode == 'train' else None,
+            eval_dataset=self._get_dataset('validation') if mode == 'train' else None,
             tokenizer=self.preprocessor.tokenizer if mode == 'train' else None, 
             callbacks=[LoggerLogCallback()],
         )
@@ -97,8 +97,17 @@ class FineTuning:
         if mode == 'train':
             trainer.train()
         
-        predictions, _, _ = trainer.predict(self.__get_dataset('validation'))
+        predictions, _, _ = trainer.predict(self._get_dataset('validation'))
         start_logits, end_logits = predictions
-        self.evaluation.compute_metrics(start_logits, end_logits, self.__get_dataset('validation'), self.mrc_dataset["validation"])
+        self.evaluation.compute_metrics(start_logits, end_logits, self._get_dataset('validation'), self.mrc_dataset["validation"])
         
         self.LOGGER.info("파인 튜닝 완료")
+
+    def validate(self):
+        """모델 검증"""
+        LOGGER = SingleLogger().getLogger()
+        LOGGER("검증 작업...")
+
+    def validaate_and_save(self, model):
+        """모델 검증과 저장"""
+        self.validate()

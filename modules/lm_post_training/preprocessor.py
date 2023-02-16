@@ -18,43 +18,42 @@ class NSPMode:
     """
     def __init__(self) -> None:
         # self.max_direct_range = 1
-        self.prob = 0.5
+        self._prob = 0.5
         # no_dupplicatee: 모든 결과에서 유일한 문장 사용
         # only_first: 첫번째 문장만 유일한 문장 사용
         #TODO soft: 유일한 문장쌍 사용
         self._strage_list = set(["no_dupplicate", "only_first", "soft"])
         self._strategy = "no_dupplicate"
 
-    def get_strategy_list(self):
-        """ 현재 가능한 생성 전략 리스트를 반환한다.
-        
-        Returns:
-            list: 생성 전략 리스트
-        """
+    @property
+    def prob(self):
+        """올바른 다음 문장 선택 확률"""
+        return self._prob
+    
+    @prob.setter
+    def prob(self, value : float):
+        assert value >= 0.0 and value <= 1.0
+        self._prob = value
+
+    @property
+    def strategy_list(self):
+        """ 현재 가능한 생성 전략 리스트를 반환한다."""
         return self._strageList
 
-    def get_strategy(self):
-        """ 현재 생성 전략을 반환한다.
-
-        Returns:
-            String: 현재 생성 전략
-        """
+    @property
+    def strategy(self):
+        """ 현재 생성 전략을 반환한다."""
         return self._strategy
 
-    def set_strategy(self, strategy):
+    @strategy.setter
+    def strategy(self, value: str):
         """ 생성 전략을 설정한다.
 
         Args:
             strategy (String): 새로운 생성 전략 (no_dupplicate or only_first or soft)
-        
-        Returns:
-            boolean: 성공 시 `True`, 실패 시 `False`
         """
-        if strategy in self._strage_list:
-            self._strategy = strategy
-            return True
-        else:
-            return False
+        assert value in self._strage_list
+        self._strategy = value
 
 class NSPDataset:
     """ 다음 문장 예측 설정
@@ -135,9 +134,9 @@ class Preprocessor:
         
         preprocessor.read_data("dataset/train", data_DOM)
 
-        print(preprocessor.get_size()) # 추출된 개수 출력
+        print(preprocessor.size) # 추출된 개수 출력
 
-        print(preprocessor.get_context_size()) # 추출된 문장 출력
+        print(preprocessor.context_size) # 추출된 문장 출력
     """
     def __init__(self, model_name) -> None:
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -153,7 +152,8 @@ class Preprocessor:
         self._size = 0
         self._context_size = 0
 
-    def get_raw_data(self):
+    @property
+    def data(self):
         """ 전처리 객채에 저장된 데이터를 반환한다.
         
         Returns:
@@ -161,7 +161,8 @@ class Preprocessor:
         """
         return self._data
 
-    def get_size(self):
+    @property
+    def size(self):
         """ 전처리 객채에 저장된 기사 개수를 반환한다.
         
         Returns:
@@ -169,7 +170,8 @@ class Preprocessor:
         """
         return self._size
     
-    def get_context_size(self):
+    @property
+    def context_size(self):
         """ 전처리 객채에 저장된 문장 개수를 반환한다.
 
         Returns:
@@ -298,7 +300,7 @@ class Preprocessor:
             sentence = method(sentence)
         return sentence
     
-    def __get_random_sentence(self, except_index, size = 1):
+    def _get_random_sentence(self, except_index, size = 1):
         """ 무작위 문장 선별: NSP sub function
 
         내부 데이터 구조에서 무작위 문장을 선별한다. NSPused 객체를 사용하며 이미 사용한 특정 셋에 대해서는 선별하지 않는다.
@@ -349,7 +351,7 @@ class Preprocessor:
         """
         result = []
         result_size = 0
-        used_index = NSPDataset("Set" if self.nsp_mode.get_strategy() == "soft" else "Dict")
+        used_index = NSPDataset("Set" if self.nsp_mode.strategy == "soft" else "Dict")
         count = 0
         while result_size < size:
             if count == 100000:
@@ -360,14 +362,14 @@ class Preprocessor:
                 # 2번째 문장: 확률적으로 긍정 문장(원문 다음 문장), 부정 문장 추가(다른 기사의 무작위 문장)
                 rand = random.random()
                 if rand < self.nsp_mode.prob:
-                    index_f, stn_index_f = self.__get_random_sentence(used_index, 2)
+                    index_f, stn_index_f = self._get_random_sentence(used_index, 2)
                     index_s = index_f
                     stn_index_s = stn_index_f + 1
                     label = True
                 else:
-                    index_f, stn_index_f = self.__get_random_sentence(used_index)
+                    index_f, stn_index_f = self._get_random_sentence(used_index)
                     used_index.add_list(index_f, "*")
-                    index_s, stn_index_s = self.__get_random_sentence(used_index)
+                    index_s, stn_index_s = self._get_random_sentence(used_index)
                     used_index.remove_list(index_f, "*")
                     label = False
                 
@@ -379,12 +381,12 @@ class Preprocessor:
                 step['label'] = label
                 result.append(step)
                 result_size = result_size + 1
-                if self.nsp_mode.get_strategy() == "no_dupplicate":
+                if self.nsp_mode.strategy == "no_dupplicate":
                     used_index.add_list(index_f, stn_index_f)
                     used_index.add_list(index_s, stn_index_s)
-                elif self.nsp_mode.get_strategy() == "only_first":
+                elif self.nsp_mode.strategy == "only_first":
                     used_index.add_list(index_f, stn_index_f)
-                elif self.nsp_mode.get_strategy() == "soft":
+                elif self.nsp_mode.strategy == "soft":
                     used_index.add_set(index_f, stn_index_f, index_s, stn_index_s)
                     
             except:
