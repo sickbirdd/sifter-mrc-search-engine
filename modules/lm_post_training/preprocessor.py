@@ -294,7 +294,7 @@ class Preprocessor:
             sentence = re.sub(r"[^\uAC00-\uD7A30-9a-zA-Z\s]", '', sentence)
             return sentence
         
-        clean_methods = [strip_sentence, sub_tag, sub_email, sub_URL, sub_bracket, sub_con_vow, sub_blank, sub_repeat_char, sub_noise]
+        clean_methods = [strip_sentence, sub_tag, sub_email, sub_URL, sub_bracket, sub_con_vow, sub_repeat_char, sub_noise, sub_blank]
         for method in clean_methods:
             sentence = method(sentence)
         return sentence
@@ -415,39 +415,40 @@ class Preprocessor:
         sep_token=self.tokenizer.sep_token_id,
         mask_token=self.tokenizer.mask_token_id,
         pad_token=self.tokenizer.pad_token_id
+        
         if type(mask_token) is tuple:
             mask_token = mask_token[0]
 
         if type(sep_token) is tuple:
             sep_token = sep_token[0]
-
+        
         # 마스킹 전 label 키에 id 복사
         data_tokenizing['labels'] = copy.deepcopy(data_tokenizing['input_ids'])
-        # 마스킹 전 label 키에 id 복사
-        # data["label"] = data["input_ids"]
+        
         # 마스킹 . 기사 하나씩
-
-
-        for context in data_tokenizing["input_ids"]:
-            # 15%확률로 마스킹, 특수토큰은 항상 false
-            rand = torch.rand(len(context))
-            mask_arr = (rand < ratio)
+        for context in data_tokenizing['input_ids']:
+            masking_index = []
             for i in range(len(context)):
-                if context[i] in [cls_token, sep_token, mask_token, pad_token]:
-                    mask_arr[i] = False
+                if(context[i] == cls_token or context[i] == sep_token):
+                    continue
+                elif(context[i] == pad_token):
+                    break
+                masking_index.append(i)
+            random.shuffle(masking_index)
+            # 15% 확률로 마스킹, 특수토큰은 고려 안함.
+            masking_num = min(40, max(1, int(round(len(masking_index) * ratio))))
             
-            for i in range(len(context)):
-                token = context[i]
-                mask = mask_arr[i]
-                if mask == True:
-                    mask_ratio = torch.rand(1)
-                    # 15%의 마스킹 될 토큰 중 10%는 다른 토큰으로 대체
-                    if mask_ratio <= 0.1:
-                        context[i] = int(torch.randint(low=10, high=self.tokenizer.vocab_size, size=(1,)))
-                    # 10%는 선택됐지만 그대로 두기    
-                    elif mask_ratio <= 0.2:
-                        context[i] = token
-                    # 나머지는 마스크 토큰으로 변경
+            for j in range(masking_num):
+                mask_ratio = torch.rand(1)
+                # 80%는 마스크 토큰으로 변경
+                try:
+                    if mask_ratio < 0.8:
+                        context[masking_index[j]] = mask_token   
                     else:
-                        context[i] = mask_token
+                        # 10%는 랜덤 단어로 변경
+                        if(torch.rand(1) < 0.5):
+                            context[masking_index[j]] = int(torch.randint(low=10, high=self.tokenizer.vocab_size, size=(1,)))    
+                except:  
+                    print(self.tokenizer.decode(context))
+                    
         return data_tokenizing
