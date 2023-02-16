@@ -6,22 +6,25 @@ sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(os.path.abspath(
 
 from modules.lm_post_training.preprocessor import Preprocessor
 from unittest import TestCase, main
-from modules.config.logging import Test, logging, setUp
+from modules.utils.logging import Test, logging
 
-setUp()
+with open('config_log.yaml') as f:
+    """ 설정 파일 중 log 관련 설정 파일의 정보를 불러와 설정한다."""
+    CONF_LOG = yaml.safe_load(f)
+logging.config.dictConfig(CONF_LOG)
 LOGGER = logging.getLogger('test')
 
 class PreprocessorTest(TestCase):
     
     # 클래스 생성시 한번만 실행
     @classmethod
-    def setUpClass(self, CONF):
+    def setUpClass(self):
         # 설정 파일 만들어지면 관련 변수로 대체할 것
         
-        self.model_name = CONF["model"]["name"]
+        self.model_name = "klue/bert-base"
         self.impl_preprocessor  = Preprocessor(self.model_name)
-        self.data_path = CONF["dataset"]["path"]
-        self.data_DOM = CONF["dataset"]["struct"].split('/')
+        self.data_path = "datasets/lm_post_training/training/LabeledData"
+        self.data_DOM = "named_entity/#/content/#/sentence".split('/')
         
         LOGGER.info("1:---최초 생성 테스트---")
         assert self.impl_preprocessor.get_size() == 0
