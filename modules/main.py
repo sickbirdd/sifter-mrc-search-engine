@@ -35,7 +35,7 @@ def main():
 
     group_common = parser.add_argument_group('common')
     group_common.add_argument('--epochs', type=int, default=3, help="에폭 수(기본값: 3)")
-    group_common.add_argument('--max_length', type=int, default=512, help="문장 최대 길이(기본값: 512)")
+    group_common.add_argument('--max_length', type=int, default=128, help="문장 최대 길이(기본값: 128)")
     group_common.add_argument("--model_name", type=str, default='klue/bert-base', help="모델 이름(기본값: klue/bert-base)")
 
     group_post_training = parser.add_argument_group('post_training')
@@ -84,6 +84,7 @@ def main():
                 batch_size=args.max_length,
 
                 preprocess_dataset_path = args.save_pretrain_path
+                upload_pt=args.upload_pt
                 )
         trainer.fit()
     elif args.type == 'fine_tuning':

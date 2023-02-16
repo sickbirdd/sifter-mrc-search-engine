@@ -13,7 +13,7 @@ import time
 class Trainer:
     """Post-Training 훈련 과정"""
     def __init__(self, model_name: str, device: str, dataset_path, dataset_struct, context_pair_size: int,
-                     epochs: int, max_length: int, batch_size: int, preprocess_dataset_path: str) -> None:
+                     epochs: int, max_length: int, batch_size: int, preprocess_dataset_path: str, upload_pt: str) -> None:
         self.device = device
         self.model = BertForPreTraining.from_pretrained(model_name).to(device)
         self.preprocessor = Preprocessor(model_name=model_name)
@@ -24,6 +24,8 @@ class Trainer:
         self.epochs = epochs
         self.max_length = max_length
         self.batch_size = batch_size
+
+        self.upload_pt = upload_pt
 
     def preprocess(self):
         """전처리기를 사용하여 데이터를 전처리한다."""
