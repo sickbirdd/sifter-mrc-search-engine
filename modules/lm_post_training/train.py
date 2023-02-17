@@ -1,6 +1,6 @@
 import torch
 from tqdm import tqdm
-from transformers import BertForPreTraining
+from transformers import BertForPreTraining, BertForMaskedLM
 from torch.utils.data import DataLoader
 from .dataset import MeditationsDataset
 from .preprocessor import Preprocessor
@@ -12,20 +12,24 @@ import time
 
 class Trainer:
     """Post-Training 훈련 과정"""
-    def __init__(self, model_name: str, device: str, dataset_path, dataset_struct, context_pair_size: int,
-                     epochs: int, max_length: int, batch_size: int, preprocess_dataset_path: str, upload_pt: str) -> None:
+    def __init__(self, model_name: str, device: str, dataset_path, dataset_struct, train_size: int,
+                     epochs: int, max_length: int, batch_size: int, preprocess_dataset_path: str, upload_pt: str,
+                     do_NSP: bool, NSP_prob: float, mask_prob: float) -> None:
         self.device = device
-        self.model = BertForPreTraining.from_pretrained(model_name).to(device)
+        self.model = BertForPreTraining.from_pretrained(model_name).to(device) if do_NSP else BertForMaskedLM.from_pretrained(model_name)
         self.preprocessor = Preprocessor(model_name=model_name)
         self.preprocess_dataset_path = preprocess_dataset_path
         self.dataset_path = dataset_path
         self.dataset_struct = dataset_struct
-        self.context_pair_size = context_pair_size
+        self.train_size = train_size
         self.epochs = epochs
         self.max_length = max_length
         self.batch_size = batch_size
-
         self.upload_pt = upload_pt
+
+        self.do_NSP = do_NSP
+        self.preprocessor.nsp_mode.prob = NSP_prob
+        self.mask_prob = mask_prob
 
     def preprocess(self):
         """전처리기를 사용하여 데이터를 전처리한다."""
@@ -40,33 +44,45 @@ class Trainer:
         LOGGER.info("추출된 문장 개수: " + str(self.preprocessor.context_size))
 
         # NSP
-        LOGGER.info("훈련할 데이터쌍 개수: " + str(self.context_pair_size))
+        if self.do_NSP:
+            LOGGER.info("훈련할 데이터쌍 개수: " + str(self.train_size))
+            
             # 훈련시 데이터 사이즈 확인 필요
-        train_contexts = self.preprocessor.next_sentence_prediction(self.context_pair_size)
-        LOGGER.info("NSP 문장 쌍 생성 완료")
+            train_contexts = self.preprocessor.next_sentence_prediction(self.train_size)
+            LOGGER.info("NSP 문장 쌍 생성 완료")
 
-        # NSP 데이터 구조 변경
-        nsp_data = {"first":[], "second":[], "labels":[]}
-        for train_context in train_contexts:
-            nsp_data['first'].append(train_context['first'])
-            nsp_data['second'].append(train_context['second'])
-            nsp_data['labels'].append(train_context['label'])
-        LOGGER.info("NSP 변환 완료")
-        
-        # 데이터 토크나이징 (토큰 -> id)
-        token_data = self.preprocessor.tokenizer(nsp_data['first'],
-                                                    nsp_data['second'],
-                                                    add_special_tokens=True,
-                                                    truncation=True,
-                                                    max_length=self.max_length,
-                                                    padding="max_length",
-                                                    return_tensors="pt"
-                                                    )
-        token_data['next_sentence_label'] = torch.LongTensor(nsp_data['labels'])
+            # NSP 데이터 구조 변경
+            nsp_data = {"first":[], "second":[], "labels":[]}
+            for train_context in train_contexts:
+                nsp_data['first'].append(train_context['first'])
+                nsp_data['second'].append(train_context['second'])
+                nsp_data['labels'].append(train_context['label'])
+            LOGGER.info("NSP 변환 완료")
+
+            # 데이터 토크나이징 (토큰 -> id)
+            token_data = self.preprocessor.tokenizer(nsp_data['first'],
+                                                        nsp_data['second'],
+                                                        add_special_tokens=True,
+                                                        truncation=True,
+                                                        max_length=self.max_length,
+                                                        padding="max_length",
+                                                        return_tensors="pt"
+                                                        )
+            token_data['next_sentence_label'] = torch.LongTensor(nsp_data['labels'])
+        else:
+            LOGGER.info("NSP 과정을 생략하였습니다.")
+            LOGGER.info("훈련할 데이터 개수: " + str(self.train_size))
+            token_data = self.preprocessor.tokenizer(self.preprocessor.get_context(self.train_size),
+                                                        add_special_tokens=True,
+                                                        truncation=True,
+                                                        max_length=self.max_length,
+                                                        padding="max_length",
+                                                        return_tensors="pt"
+                                                        )
         LOGGER.info("토크나이징 완료")
 
         # 마스킹
-        mask_data = self.preprocessor.masking(token_data)
+        mask_data = self.preprocessor.masking(data_tokenizing=token_data, ratio=self.mask_prob)
         LOGGER.info("마스킹 완료")
 
         return mask_data
@@ -136,14 +152,23 @@ class Trainer:
                 token_type_ids = batch['token_type_ids'].to(self.device)
                 attention_mask = batch['attention_mask'].to(self.device)
                 labels = batch['labels'].to(self.device)
-                next_sentence_label = batch['next_sentence_label'].to(self.device)
+                if self.do_NSP:
+                    next_sentence_label = batch['next_sentence_label'].to(self.device)
                 
                 # process
-                outputs = self.model(input_ids=input_ids, 
-                            token_type_ids=token_type_ids, 
-                            attention_mask=attention_mask, 
-                            next_sentence_label=next_sentence_label, 
-                            labels=labels)
+                if self.do_NSP:
+                    outputs = self.model(input_ids=input_ids,
+                                token_type_ids=token_type_ids,
+                                attention_mask=attention_mask,
+                                next_sentence_label=next_sentence_label,
+                                labels=labels
+                            )
+                else:
+                    outputs = self.model(input_ids=input_ids,
+                            token_type_ids=token_type_ids,
+                            attention_mask=attention_mask,
+                            labels=labels
+                            )
                 
                 # extract loss
                 loss = outputs.loss
@@ -157,3 +182,4 @@ class Trainer:
         LOGGER.info("훈련이 완료되었습니다.")
 
         self.model.save_pretrained(save_directory=self.upload_pt)
+        self.preprocessor.tokenizer.save_pretrained(save_directory=self.upload_pt)
