@@ -10,6 +10,7 @@ import pickle
 import os
 import time
 
+
 class Trainer:
     """Post-Training 훈련 과정"""
     def __init__(self, model_name: str, device: str, dataset_path, dataset_struct, context_pair_size: int,
@@ -121,6 +122,10 @@ class Trainer:
         # 옵티마이저 세팅
         optim = torch.optim.AdamW(self.model.parameters(), lr=5e-5)
         epochs = self.epochs
+        
+        # learning rate 스케줄러 초기화
+        total_steps = len(loader) * epochs
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optim, T_max=total_steps) 
 
         # 훈련(Pre-training)
         LOGGER.info("훈련 시작")
@@ -151,6 +156,8 @@ class Trainer:
                 loss.backward()
                 # update parameters
                 optim.step()
+                # update scheduler
+                scheduler.step()
                 # print relevant info to progress bar
                 loop.set_description(f'Epoch {epoch}')
                 loop.set_postfix(loss=loss.item())

@@ -6,7 +6,7 @@ import torch
 import random
 from pathlib import Path
 from transformers import AutoTokenizer
-from modules.utils.logging import SingleLogger
+from utils.logging import SingleLogger
 
 class NSPMode:
     """ 다음 문장 예측 설정
