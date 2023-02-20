@@ -160,6 +160,17 @@ class Preprocessor:
             list: 2차원 데이터 리스트 ex) [기사:[문장1, 문장2, ...], ...]
         """
         return self._data
+    
+    def get_context(self, size):
+        """ 전처리 객체에 저장된 문장 리스트를 반환한다.
+        
+        Args:
+            size (int): 문장 리스트 길이
+
+        Returns:
+            list: 문장 리스트
+        """
+        return sum(self._data, [])[:size]
 
     @property
     def size(self):
