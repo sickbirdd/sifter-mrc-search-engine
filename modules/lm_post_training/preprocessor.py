@@ -170,8 +170,13 @@ class Preprocessor:
         Returns:
             list: 문장 리스트
         """
-        return sum(self._data, [])[:size]
-
+        res = []
+        for contexts in self._data:
+            for context in contexts:
+                res.append(context)
+                size -= 1
+                if size == 0: return res
+        raise Exception("사이즈만큼 불러온 데이터가 없음")
     @property
     def size(self):
         """ 전처리 객채에 저장된 기사 개수를 반환한다.

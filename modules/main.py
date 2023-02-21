@@ -46,7 +46,7 @@ def main():
     group_post_training.add_argument('--upload_pt', type=str, default="modules/lm_post_training/temp_model", help="모델 저장 경로 (post-training) (기본갑: modules/lm_post_training/temp_model")
     group_post_training.add_argument('--save_pretrain_path', type=str, help="전처리 데이터셋 중간 저장 경로, 없을 시 해당 기능 사용 안함")
 
-    group_post_training.add_argument('--do_NSP', type=bool, default='True', help="전처리 과정 상 다음 문장 예측 사용 여부 (기본값: True)", action=argparse.BooleanOptionalAction)
+    group_post_training.add_argument('--do_NSP', type=int, default=1, help="전처리 과정 상 다음 문장 예측 사용 여부 (기본값: True)")
     group_post_training.add_argument('--NSP_prob', type=float, default=0.5, help="다음 문장 예측 확률 (기본값: 0.5)")
     group_post_training.add_argument('--mask_prob', type=float, default=0.15, help="마스킹 확률(문장 변경 확률 - 그중 0.8 마스킹 0.1 다른 문장 0.1 변경 X) (기본값: 0.15)")
 
@@ -58,10 +58,10 @@ def main():
     group_fine_tuning.add_argument('--max_answer_length', type=int, default=30, help="최대 답변 길이(기본값: 30)")
     group_fine_tuning.add_argument('--train_batch', type=int, default=16, help="훈련 배치 크기(기본값: 16)")
     group_fine_tuning.add_argument('--eval_batch', type=int, default=16, help="평가 배치 크기(기본값: 16)")
-    group_fine_tuning.add_argument('--learning_rate', type=int, default=0.00005, help="모델 학습률(기본값: 0.00005)")
+    group_fine_tuning.add_argument('--learning_rate', type=float, default=0.00005, help="모델 학습률(기본값: 0.00005)")
     group_fine_tuning.add_argument('--weight_decay', type=int, default=0.01, help="(기본값: 0.01)")
-    group_fine_tuning.add_argument('--fp16', type=bool, default=False, help="(기본값: False)", action=argparse.BooleanOptionalAction)
-    group_fine_tuning.add_argument('--push_to_hub', type=bool, default=False, help="Hugging Face 업로드 여부(기본값: False)", action=argparse.BooleanOptionalAction)
+    group_fine_tuning.add_argument('--fp16', type=bool, default=False, help="(기본값: False)")
+    group_fine_tuning.add_argument('--push_to_hub', type=bool, default=False, help="Hugging Face 업로드 여부(기본값: False)")
     group_fine_tuning.add_argument('--login_token', type=str, help="Hugging Face 로그인 토큰(업로드시 필요)")
     group_fine_tuning.add_argument('--upload_ft', type=str, default="modules/mrc_fine_tuning/eval_model", help="모델 저장 경로 (fine-tuning) (업로드시 필요, 기본갑: modules/mrc_fine_tuning/eval_model)")
 
@@ -90,7 +90,7 @@ def main():
 
                 preprocess_dataset_path = args.save_pretrain_path,
                 upload_pt=args.upload_pt,
-                do_NSP=args.do_NSP,
+                do_NSP= True if args.do_NSP == 1 else False,
                 NSP_prob=args.NSP_prob,
                 mask_prob=args.mask_prob
                 )

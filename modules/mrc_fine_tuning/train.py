@@ -25,7 +25,8 @@ class FineTuning:
         cls = type(self)
         if not hasattr(cls, "self._" + str(dataset) + "_dataset"):
             dataset = self._mrc_dataset[dataset].map(
-                self.preprocessor.preprocess_training_examples,
+                self.preprocessor.preprocess_training_examples if dataset == 'train'
+                else self.preprocessor.preprocess_validation_examples,
                 batched=True,
                 remove_columns=self._mrc_dataset[dataset].column_names,
             )
@@ -39,11 +40,11 @@ class FineTuning:
         return self._train_dataset if dataset == 'train' else self._validation_dataset
         
         
-    def _load_dataset(self):
+    def _load_dataset(self, mode):
         """데이터 셋이 없으면 저장"""
         cls = type(self)
         if not hasattr(cls, "self._mrc_dataset"):
-            self._mrc_dataset = load_dataset(self.CONF.training_path)
+            self._mrc_dataset = load_dataset(self.CONF.training_path) if mode == 'train' else load_dataset("json", data_files={"validation":self.CONF.test_path})
             self.LOGGER.info("데이터 셋이 설정되었습니다.")
 
 
@@ -55,7 +56,7 @@ class FineTuning:
         주의점: mode는 train과 아닌것으로 구분된다.
         """
         self.LOGGER.info("파인 튜닝 시작")  
-        self.mrc_dataset = self._load_dataset()
+        self._load_dataset(mode)
 
         if mode == 'train':
             # 훈련 및 평가 동시 진행
@@ -99,7 +100,7 @@ class FineTuning:
         
         predictions, _, _ = trainer.predict(self._get_dataset('validation'))
         start_logits, end_logits = predictions
-        self.evaluation.compute_metrics(start_logits, end_logits, self._get_dataset('validation'), self.mrc_dataset["validation"])
+        self.LOGGER.info(self.evaluation.compute_metrics(start_logits, end_logits, self._get_dataset('validation'), self._mrc_dataset["validation"]))
         
         self.LOGGER.info("파인 튜닝 완료")
 

@@ -17,7 +17,7 @@ class Trainer:
                      epochs: int, max_length: int, batch_size: int, preprocess_dataset_path: str, upload_pt: str,
                      do_NSP: bool, NSP_prob: float, mask_prob: float) -> None:
         self.device = device
-        self.model = BertForPreTraining.from_pretrained(model_name).to(device) if do_NSP else BertForMaskedLM.from_pretrained(model_name)
+        self.model = BertForPreTraining.from_pretrained(model_name).to(device) if do_NSP else BertForMaskedLM.from_pretrained(model_name).to(device)
         self.preprocessor = Preprocessor(model_name=model_name)
         self.preprocess_dataset_path = preprocess_dataset_path
         self.dataset_path = dataset_path
