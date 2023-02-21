@@ -5,6 +5,9 @@ from starlette.routing import Route
 from transformers import pipeline
 import asyncio
 
+MODEL_NAME = "./klue-finetuned-squad_kor_v1"
+TOP_K = 10
+
 app = Starlette()
 
 # localhost:8080/inference?question="..."&context="..." => queue에 질문, 문장 등록
@@ -32,7 +35,7 @@ async def server_loop(q):
 
     무한히 돌면서 결과값을 반환한다.
     """
-    pipe = pipeline("question-answering", model="distilbert-base-cased-distilled-squad")
+    pipe = pipeline("question-answering", model=MODEL_NAME, top_k = TOP_K)
     while True:
         (question, context, response_q) = await q.get()
         out = pipe(question=question, context=context)
