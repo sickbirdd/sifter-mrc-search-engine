@@ -78,10 +78,10 @@ def main():
     group_fine_tuning.add_argument('--max_answer_length', type=int, default=30, help="최대 답변 길이(기본값: 30)")
     group_fine_tuning.add_argument('--learning_rate', type=float, default=0.00005, help="모델 학습률(기본값: 0.00005)")
     group_fine_tuning.add_argument('--weight_decay', type=int, default=0.01, help="(기본값: 0.01)")
-    group_fine_tuning.add_argument('--fp16', type=bool, default=False, help="(기본값: False)")
+    group_fine_tuning.add_argument('--fp16', type=int, default=0, help="(기본값: False)")
 
     # 모델 관리
-    group_fine_tuning.add_argument('--push_to_hub', type=bool, default=False, help="Hugging Face 업로드 여부(기본값: False)")
+    group_fine_tuning.add_argument('--push_to_hub', type=int, default=0, help="Hugging Face 업로드 여부(기본값: False)")
     group_fine_tuning.add_argument('--login_token', type=str, help="Hugging Face 로그인 토큰(업로드시 필요)")
     group_fine_tuning.add_argument('--upload_ft', type=str, default="modules/mrc_fine_tuning/eval_model", help="모델 저장 경로 (fine-tuning) (업로드시 필요, 기본갑: modules/mrc_fine_tuning/eval_model)")
     
