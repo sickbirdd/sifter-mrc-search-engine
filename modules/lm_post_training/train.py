@@ -60,7 +60,6 @@ class Trainer:
                 nsp_data['labels'].append(train_context['label'])
             LOGGER.info("NSP 변환 완료")
 
-            print(self.preprocessor.extractor.data)
             # 데이터 토크나이징 (토큰 -> id)
             token_data = self.preprocessor.tokenizer(nsp_data['first'],
                                                         nsp_data['second'],
