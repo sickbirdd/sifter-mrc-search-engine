@@ -177,6 +177,7 @@ class Preprocessor:
                 size -= 1
                 if size == 0: return res
         raise Exception("사이즈만큼 불러온 데이터가 없음")
+    
     @property
     def size(self):
         """ 전처리 객채에 저장된 기사 개수를 반환한다.
