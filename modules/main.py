@@ -44,7 +44,7 @@ def main():
     group_common.add_argument("--model_name", type=str, default='klue/bert-base', help="모델 이름(기본값: klue/bert-base)")
 
     # ============================ #
-    # POST TRAINGING 관련 파라미터 #
+    # POST TRAINGING 관련 파라미터
     # ============================ #
 
     # 하이퍼 파라미터
@@ -69,7 +69,7 @@ def main():
 
 
     # ========================= #
-    # Fine Tuning 관련 파라미터 #
+    # Fine Tuning 관련 파라미터
     # ========================= #
 
     # 하이퍼 파라미터
@@ -91,7 +91,7 @@ def main():
     group_fine_tuning.add_argument('--test_path', type=str, default="datasets/mrc_fine_tuning/test/sports_domain_test.json", help="ft-dataset-test_path(기본값: datasets/mrc_fine_tuning/test/sports_domain_test.json)")
 
     # ========================= #
-    # Evaluation  관련 파라미터 #
+    # Evaluation  관련 파라미터
     # ========================= #
 
     group_fine_tuning.add_argument('--metric_type', type=str, default="squad", help="평가 방법(기본값: squad)")
