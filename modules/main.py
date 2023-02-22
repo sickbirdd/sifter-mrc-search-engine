@@ -42,7 +42,7 @@ def main():
     group_post_training.add_argument('--train_size', type=int, default=1000, help="훈련 데이터셋 크기(NSP 문장 쌍 개수 혹은 single 문장 개수)(기본값: 1000)")
     group_post_training.add_argument('--batch_size', type=int, default=16, help="배치 크기(기본값: 16)")
     group_post_training.add_argument('--dataset_path', type=str, default="datasets/lm_post_training/training/LabeledData", help="데이터 셋 경로(기본값: datasets/lm_post_training/training/LabeledData)")
-    group_post_training.add_argument('--dataset_struct', type=str, default="named_entity/#/content/#/sentence", help="데이터 셋 구조(기본값: named_entity/#/content/#/sentence)")
+    group_post_training.add_argument('--dataset_struct', type=str, default="named_entity/*/content/#/sentence", help="데이터 셋 구조(기본값: named_entity/*/content/#/sentence)")
     group_post_training.add_argument('--upload_pt', type=str, default="modules/lm_post_training/temp_model", help="모델 저장 경로 (post-training) (기본갑: modules/lm_post_training/temp_model")
     group_post_training.add_argument('--save_pretrain_path', type=str, help="전처리 데이터셋 중간 저장 경로, 없을 시 해당 기능 사용 안함")
 
