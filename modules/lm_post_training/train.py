@@ -15,6 +15,7 @@ class Trainer:
     """Post-Training 훈련 과정"""
     def __init__(self, model_name: str, device: str, dataset_path, dataset_struct, train_size: int,
                      epochs: int, max_length: int, batch_size: int, preprocess_dataset_path: str, upload_pt: str,
+                     split: bool, extract_path: str, overwrite: bool,
                      do_NSP: bool, NSP_prob: float, mask_prob: float) -> None:
         self.device = device
         self.model = BertForPreTraining.from_pretrained(model_name).to(device) if do_NSP else BertForMaskedLM.from_pretrained(model_name).to(device)
@@ -27,6 +28,12 @@ class Trainer:
         self.max_length = max_length
         self.batch_size = batch_size
         self.upload_pt = upload_pt
+
+        self.preprocessor.extractor.split = split
+        if extract_path != None:
+            self.preprocessor.extractor.is_dump = True
+            self.preprocessor.extractor.dump_path=extract_path
+        self.preprocessor.extractor.overwrite = overwrite
 
         self.do_NSP = do_NSP
         self.preprocessor.nsp_mode.prob = NSP_prob

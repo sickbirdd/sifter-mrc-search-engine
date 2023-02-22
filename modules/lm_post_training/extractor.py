@@ -13,6 +13,7 @@ class Extractor:
         size (int) : 기사 개수
         context_size (int) : 문장 개수
         split (bool) : 문장 분리기(kss) 사용 여부 - 문장 추출시 적용 (기본값 : False)
+        is_dump(bool) : 저장 여부(기본 값: False)
         directory_path (str) : 데이터 저장 위치 (디렉토리, 기본값: ext-data)
         file_name (str) : 데이터 저장 위치 (파일 이름, 기본값: extract-base.data)
         overwrite (bool) : 파일 덮어쓰기 여부 (기본값: False)
@@ -34,9 +35,18 @@ class Extractor:
         self._size = 0
         self._context_size = 0
         self.split = False
-        self.directory_path = "ext-data"
-        self.file_name = "extract-base.data"
+        self.is_dump = False
+        self._directory_path = "ext-data"
+        self._file_name = "extract-base.data"
         self.overwrite = False
+
+    @property
+    def dump_path(self):
+        return self._directory_path + ('' if self._directory_path == '' else '/')  + self._file_name
+
+    @dump_path.setter
+    def dump_path(self, path):
+        self._directory_path, self._file_name = os.path.split(path)
 
     def clear(self):
         """추출된 데이터셋을 모두 제거합니다."""
@@ -141,8 +151,16 @@ class Extractor:
             data_format (str, optional): 찾고자 하는 확장자 명. 디폴트 값은 ".json".
 
         """
-
         LOGGER = SingleLogger().getLogger()
+        
+        if self.is_dump:
+            try:
+                self.load_data()
+                return
+            except:
+                LOGGER.info("복원에 실패하여 추출을 시작합니다. 덮어쓰기 여부: {}".format(self.overwrite))
+
+
         data_path = Path(data_path)
         
         for (root, _, files) in os.walk(data_path):
@@ -158,21 +176,25 @@ class Extractor:
                     self._size = self._size + len(context_list)
                     self._context_size += context_size
 
+        if self.is_dump:
+            self.save_data()
+
     def save_data(self):
         """ 추출된 데이터를 저장합니다. """
         LOGGER = SingleLogger().getLogger()
         try:
-            if not os.path.exists(self.directory_path):
+            if not os.path.exists(self._directory_path):
                 LOGGER.info("디렉토리가 없습니다. {self.directory_path}를 생성합니다.")
-                os.makedirs(self.directory_path)
+                os.makedirs(self._directory_path)
         except OSError:
             LOGGER.warning("ERROR: 디렉토리 생성 실패")
+            raise Exception("CREATE directory failure!")
 
-        if not self.overwrite and os.path.exists(self.directory_path + '/' + self.file_name):
+        if not self.overwrite and os.path.exists(self.dump_path):
             LOGGER.warning("이미 저장된 데이터가 존재합니다. 덮어쓰기를 설정하거나 파일 이름을 바꾸세요.")
             raise Exception("이미 저장된 데이터가 존재합니다. 덮어쓰기를 설정하거나 파일 이름을 바꾸세요.")
 
-        with open(self.directory_path + '/' + self.file_name, "wb") as f:
+        with open(self.dump_path, "wb") as f:
             dump_data = {}
             dump_data["data"] = self._data
             dump_data["size"] = self._size
@@ -183,9 +205,9 @@ class Extractor:
     def load_data(self):
         """ 데이터를 불러와 객체에 로드합니다. """
         LOGGER = SingleLogger().getLogger()
-        if os.path.exists(self.directory_path + '/' + self.file_name):
+        if os.path.exists(self.dump_path):
             LOGGER.info("저장된 데이터를 찾았습니다. 복원을 시도합니다.")
-            with open(self.directory_path + '/' + self.file_name, "rb") as f:
+            with open(self.dump_path, "rb") as f:
                 dump_data = pickle.load(f)
                 self._data = dump_data["data"]
                 self._size = dump_data["size"]
@@ -193,3 +215,4 @@ class Extractor:
             LOGGER.info("데이터를 복원하였습니다.")
         else:
             LOGGER.warning("데이터를 찾을 수 없습니다.")
+            raise Exception("NO DATA!")
