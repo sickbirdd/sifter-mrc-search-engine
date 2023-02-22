@@ -5,7 +5,7 @@ from starlette.routing import Route
 from transformers import pipeline
 import asyncio
 
-MODEL_NAME = "./klue-finetuned-squad_kor_v1"
+MODEL_NAME = "Kdogs/klue-finetuned-squad_kor_v1"
 TOP_K = 10
 
 app = Starlette()
