@@ -14,7 +14,7 @@ app = Starlette()
 
 # localhost:8080/inference?question="..."&context="..." => queue에 질문, 문장 등록
 @app.route("/inference", methods=['GET'])
-async def inference(scope, request):
+async def inference(request):
     """ 추론 작업
 
         example) localhost:8080/inference?question="..."&context="..."
