@@ -175,6 +175,7 @@ datasets/lm_post_training/validation/*.json
 datasets/lm_post_training/training/LabeledData
 datasets/lm_post_training/training/sourceData
 datasets/lm_post_training/test/LabeledData
+datasets/lm_post_training/test/*/*.json
 datasets/mrc_fine_tuning/raw/*.json
 datasets/mrc_fine_tuning/test/*.json
 
@@ -193,6 +194,7 @@ modules/lm_post_training/temp_model
 
 # 전처리 중간 저장
 *.p
+*.data
 
 # 저장된 모델
 modules/mrc_service/klue-finetuned-squad_kor_v1

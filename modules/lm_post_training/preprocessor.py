@@ -7,6 +7,7 @@ import random
 from pathlib import Path
 from transformers import AutoTokenizer
 from utils.logging import SingleLogger
+from .extractor import Extractor
 
 class NSPMode:
     """ 다음 문장 예측 설정
@@ -140,60 +141,8 @@ class Preprocessor:
     """
     def __init__(self, model_name) -> None:
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self._data = []
-        self._size = 0
-        self._context_size = 0
+        self.extractor = Extractor()
         self.nsp_mode = NSPMode()
-    
-    #데이터만 모두 초기화한다.
-    def clear(self):
-        """ 전처리 객채에 저장된 데이터 모두 삭제한다."""
-        self._data = []
-        self._size = 0
-        self._context_size = 0
-
-    @property
-    def data(self):
-        """ 전처리 객채에 저장된 데이터를 반환한다.
-        
-        Returns:
-            list: 2차원 데이터 리스트 ex) [기사:[문장1, 문장2, ...], ...]
-        """
-        return self._data
-    
-    def get_context(self, size):
-        """ 전처리 객체에 저장된 문장 리스트를 반환한다.
-        
-        Args:
-            size (int): 문장 리스트 길이
-
-        Returns:
-            list: 문장 리스트
-        """
-        res = []
-        for contexts in self._data:
-            for context in contexts:
-                res.append(context)
-                size -= 1
-                if size == 0: return res
-        raise Exception("사이즈만큼 불러온 데이터가 없음")
-    @property
-    def size(self):
-        """ 전처리 객채에 저장된 기사 개수를 반환한다.
-        
-        Returns:
-            int: 기사 개수
-        """
-        return self._size
-    
-    @property
-    def context_size(self):
-        """ 전처리 객채에 저장된 문장 개수를 반환한다.
-
-        Returns:
-            int: 문장 개수
-        """
-        return self._context_size
     
     def remove_special_characters(self, sentence):
         """ 토큰화 과정 전에 데이터셋을 정제하기 위한 함수
@@ -261,70 +210,8 @@ class Preprocessor:
         for method in clean_methods:
             sentence = method(sentence)
         return sentence
-
-    def _context_finder(self, context_dict_and_list, data_DOM, deep):
-        """ Dict과 List로 이루어진 데이터 구조에서 특정 값 찾기
-
-        JSON을 포함한 Dict과 List로 이루어진 구조체에서 찾길 원하는 데이터 위치를 받아 해당 데이터를 리스트로 반환해 주는 내부
-        .. warning:: 3차원 이상 구조체에서는 다른 전처리기 함수와 호환되지 않는다.
-        
-        Args:
-            context_dict_and_list (dict): 원본 데이터 구조체
-            data_DOM (list): 찾고자 하는 위치 - ex) ["root", "child1", "#", "child2", "target"] "#"은 리스트를 의미한다.
-            deep (int): 단순한 1차 리스트를 내부 형식 구조에 맞게 맞추기 위한 깊이
-
-        Returns:
-            list: 2차원 이상 값 리스트
-        """
-        if len(data_DOM) == 0:
-            sentence = self.remove_special_characters(context_dict_and_list)
-            # 글자 수가 5개 이하인 문장은 제외
-            if len(sentence) <= 5: 
-                return 0, None
-            return 1, sentence if deep == 0 else [sentence]
-        
-        if data_DOM[0] == '#':
-            result = []
-            sum = 0
-            for list_component in context_dict_and_list:
-                context_count, context_list = self._context_finder(list_component, data_DOM[1:], deep - 1)
-                sum += context_count
-                if context_list != None:
-                    result.append(context_list)
-            return sum, result
-        else:
-            return self._context_finder(context_dict_and_list.get(data_DOM[0]), data_DOM[1:], deep)
-            
-    def read_data(self, data_path, data_DOM, data_format = ".json"):
-        """ 데이터 경로에서 특정 확장자로 구성된 데이터를 모두 읽는다
-
-        데이터가 존재하는 경로안의 파일에서 읽기 원하는 확장자를 받아 읽은 모든 JSON을 포함한 Dict과 List로 이루어진 
-        구조체와 찾길 원하는 데이터 위치를 전달해 해당 데이터를 리스트로 반환한 값과 길이를 저장한다.
-        
-        ..warning:: 
-            JSON 이외의 파일 확장자는 호환되지 않음.
-        
-        Args:
-            data_path (str): 데이터가 있는 폴더의 경로
-            data_DOM (list): 찾고자 하는 위치 - ex) ["root", "child1", "#", "child2", "target"] "#"은 리스트를 의미한다.
-            data_format (str, optional): 찾고자 하는 확장자 명. 디폴트 값은 ".json".
-
-        """
-        data_path = Path(data_path)
-        
-        for (root, _, files) in os.walk(data_path):
-            for file in files:
-                # TODO: dataFormat 여러개를 받아야할 때 처리 -> dataFormat을 list로 받아 밑의 코드 여러번 수행?
-                if data_format in file:
-                    file_path = os.path.join(root, file)
-                    with open(file_path, 'rb') as f:
-                        in_dict = json.load(f)
-                    context_size, context_list = self._context_finder(in_dict, data_DOM, 2)
-                    self._data.extend(context_list)
-                    self._size = self._size + len(context_list)
-                    self._context_size += context_size
     
-    def _get_random_sentence(self, except_index, size = 1):
+    def _get_random_sentence(self, except_index: NSPDataset, size = 1):
         """ 무작위 문장 선별: NSP sub function
 
         내부 데이터 구조에서 무작위 문장을 선별한다. NSPused 객체를 사용하며 이미 사용한 특정 셋에 대해서는 선별하지 않는다.
@@ -341,8 +228,8 @@ class Preprocessor:
             cnt = cnt + 1
 
             try:
-                index = random.randrange(0, self._size)
-                stn_index = random.randrange(0, len(self._data[index]) - size + 1)
+                index = random.randrange(0, self.extractor.size)
+                stn_index = random.randrange(0, len(self.extractor.data[index]) - size + 1)
                 if stn_index < 0:
                     continue
             except:
@@ -398,8 +285,8 @@ class Preprocessor:
                     label = False
                 
                 step = dict()
-                sentence_f = self._data[index_f][stn_index_f]
-                sentence_s = self._data[index_s][stn_index_s]
+                sentence_f = self.extractor.data[index_f][stn_index_f]
+                sentence_s = self.extractor.data[index_s][stn_index_s]
                 step['first'] = sentence_f
                 step['second'] = sentence_s
                 step['label'] = label

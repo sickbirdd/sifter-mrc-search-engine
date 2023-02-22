@@ -15,6 +15,7 @@ class Trainer:
     """Post-Training 훈련 과정"""
     def __init__(self, model_name: str, device: str, dataset_path, dataset_struct, train_size: int,
                      epochs: int, max_length: int, batch_size: int, preprocess_dataset_path: str, upload_pt: str,
+                     split: bool, extract_path: str, overwrite: bool,
                      do_NSP: bool, NSP_prob: float, mask_prob: float) -> None:
         self.device = device
         self.model = BertForPreTraining.from_pretrained(model_name).to(device) if do_NSP else BertForMaskedLM.from_pretrained(model_name).to(device)
@@ -28,6 +29,12 @@ class Trainer:
         self.batch_size = batch_size
         self.upload_pt = upload_pt
 
+        self.preprocessor.extractor.split = split
+        if extract_path != None:
+            self.preprocessor.extractor.is_dump = True
+            self.preprocessor.extractor.dump_path=extract_path
+        self.preprocessor.extractor.overwrite = overwrite
+
         self.do_NSP = do_NSP
         self.preprocessor.nsp_mode.prob = NSP_prob
         self.mask_prob = mask_prob
@@ -39,10 +46,10 @@ class Trainer:
         #JSON 데이터 추출
         DATA_PATH = self.dataset_path
         DATA_DOM = self.dataset_struct.split('/')
-        self.preprocessor.read_data(data_path=DATA_PATH, data_DOM=DATA_DOM)
+        self.preprocessor.extractor.read_data(data_path=DATA_PATH, data_DOM=DATA_DOM)
 
-        LOGGER.info("추출된 기사 개수: " + str(self.preprocessor.size))
-        LOGGER.info("추출된 문장 개수: " + str(self.preprocessor.context_size))
+        LOGGER.info("추출된 기사 개수: " + str(self.preprocessor.extractor.size))
+        LOGGER.info("추출된 문장 개수: " + str(self.preprocessor.extractor.context_size))
 
         # NSP
         if self.do_NSP:
@@ -73,7 +80,7 @@ class Trainer:
         else:
             LOGGER.info("NSP 과정을 생략하였습니다.")
             LOGGER.info("훈련할 데이터 개수: " + str(self.train_size))
-            token_data = self.preprocessor.tokenizer(self.preprocessor.get_context(self.train_size),
+            token_data = self.preprocessor.tokenizer(self.preprocessor.extractor.get_context(self.train_size),
                                                         add_special_tokens=True,
                                                         truncation=True,
                                                         max_length=self.max_length,
