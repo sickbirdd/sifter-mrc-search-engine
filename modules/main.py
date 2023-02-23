@@ -123,7 +123,7 @@ def main():
                 train_size=args.train_size,
                 epochs=args.epochs,
                 max_length=args.max_length,
-                batch_size=args.max_length,
+                batch_size=args.batch_size,
 
                 preprocess_dataset_path = args.save_pretrain_path,
                 upload_pt=args.upload_pt,
