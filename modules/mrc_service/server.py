@@ -27,7 +27,8 @@ async def inference(request):
     if question == None or context == None:
         raise HTTPException(status_code=400, detail="Question과 Context는 필수정보 입니다.")
 
-    top_k = int(parameters.get('top_k'))
+    top_k = parameters.get('top_k')
+    top_k = MAX_TOP_K if top_k == None else int(top_k)
     if top_k < 1 or top_k > MAX_TOP_K:
         raise HTTPException(status_code=400, detail="top_k 속성은 [1,{}]만 허용합니다.".format(MAX_TOP_K))
     
