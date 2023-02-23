@@ -103,7 +103,7 @@ class Extractor:
         else:
             return self._is_select(context_dict_and_list.get(data_DOM[0]), data_DOM[1:], value)
         
-    def _context_finder(self, context_dict_and_list, data_DOM, condition = None):
+    def _context_finder(self, context_dict_and_list, data_DOM, condition = None, index = None):
         """ Dict과 List로 이루어진 데이터 구조에서 특정 값 찾기
 
         JSON을 포함한 Dict과 List로 이루어진 구조체에서 찾길 원하는 데이터 위치를 받아 해당 데이터를 리스트로 반환해 주는 내부
@@ -117,12 +117,12 @@ class Extractor:
             list: 2차원 이상 값 리스트
         """
         if condition != None:
-            if len(condition["branch"]) == 0:
+            if index == len(condition["branch"]):
                 if not self._is_select(context_dict_and_list, condition["path"], condition["value"]):
                     return 0, None
                 condition = None
-            elif condition["branch"][0] == data_DOM[0]:
-                condition["branch"] = condition["branch"][1:]
+            elif condition["branch"][index] == data_DOM[0]:
+                index += 1
             else:
                 condition = None
 
@@ -139,7 +139,7 @@ class Extractor:
             result = []
             sum = 0
             for list_component in context_dict_and_list:
-                context_count, context_list = self._context_finder(list_component, data_DOM[1:], condition)
+                context_count, context_list = self._context_finder(list_component, data_DOM[1:], condition, index)
                 sum += context_count
                 if context_list != None:
                     if data_DOM[0] == '#':
@@ -148,7 +148,7 @@ class Extractor:
                         result.append(context_list)
             return sum, result
         else:
-            return self._context_finder(context_dict_and_list.get(data_DOM[0]), data_DOM[1:], condition)
+            return self._context_finder(context_dict_and_list.get(data_DOM[0]), data_DOM[1:], condition, index)
 
 
     def read_data(self, data_path, data_DOM, condition = None, data_format = ".json"):
@@ -186,7 +186,8 @@ class Extractor:
                     file_path = os.path.join(root, file)
                     with open(file_path, 'rb') as f:
                         in_dict = json.load(f)
-                    context_size, context_list = self._context_finder(in_dict, data_DOM, condition)
+                    context_size, context_list = self._context_finder(in_dict, data_DOM, condition, 0 if condition != None else None)
+                    
                     self._data.extend(context_list)
                     self._size = self._size + len(context_list)
                     self._context_size += context_size

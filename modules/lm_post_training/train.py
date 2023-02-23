@@ -52,7 +52,6 @@ class Trainer:
 
         LOGGER.info("추출된 기사 개수: " + str(self.preprocessor.extractor.size))
         LOGGER.info("추출된 문장 개수: " + str(self.preprocessor.extractor.context_size))
-        LOGGER.info(self.preprocessor.extractor.data)
 
         # NSP
         if self.do_NSP:
