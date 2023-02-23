@@ -70,7 +70,6 @@ async def inference_attach_file(request):
         content = pdf_parser(contents)
 
         # 모델에 요청 보내기
-        print("드가자1")
         response_q = asyncio.Queue()
         await request.app.model_queue.put((response_q, [question for _ in range(len(content))], content, top_k))
 
