@@ -3,7 +3,7 @@ from pathlib import Path
 import json
 import kss
 import pickle
-from utils.logging import SingleLogger
+from utils.logger import SingleLogger
 
 class Extractor:
     """ 파일에서 문장을 추출하는 객체입니다.

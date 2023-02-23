@@ -12,7 +12,7 @@ MRC 모델을 훈련하기 위한 프로그램
 
 import yaml
 import logging
-from utils.logging import SingleLogger
+from utils.logger import SingleLogger
 import os
 import sys
 from lm_post_training.train import Trainer

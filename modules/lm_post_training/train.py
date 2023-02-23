@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 from .dataset import MeditationsDataset
 from .preprocessor import Preprocessor
 from utils.TqdmToLogger import TqdmToLogger
-from utils.logging import SingleLogger, logging
+from utils.logger import SingleLogger, logging
 import pickle
 import os
 import time
