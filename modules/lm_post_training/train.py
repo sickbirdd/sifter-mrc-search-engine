@@ -13,9 +13,9 @@ import time
 
 class Trainer:
     """Post-Training 훈련 과정"""
-    def __init__(self, model_name: str, device: str, dataset_path, dataset_struct, train_size: int,
+    def __init__(self, model_name: str, device: str, dataset_path: str, dataset_struct: list, train_size: int,
                      epochs: int, max_length: int, batch_size: int, preprocess_dataset_path: str, upload_pt: str,
-                     split: bool, extract_path: str, overwrite: bool,
+                     split: bool, extract_path: str, overwrite: bool, condition: dict,
                      do_NSP: bool, NSP_prob: float, mask_prob: float) -> None:
         self.device = device
         self.model = BertForPreTraining.from_pretrained(model_name).to(device) if do_NSP else BertForMaskedLM.from_pretrained(model_name).to(device)
@@ -35,6 +35,8 @@ class Trainer:
             self.preprocessor.extractor.dump_path=extract_path
         self.preprocessor.extractor.overwrite = overwrite
 
+        self.condition = condition
+
         self.do_NSP = do_NSP
         self.preprocessor.nsp_mode.prob = NSP_prob
         self.mask_prob = mask_prob
@@ -45,8 +47,8 @@ class Trainer:
 
         #JSON 데이터 추출
         DATA_PATH = self.dataset_path
-        DATA_DOM = self.dataset_struct.split('/')
-        self.preprocessor.extractor.read_data(data_path=DATA_PATH, data_DOM=DATA_DOM)
+        DATA_DOM = self.dataset_struct
+        self.preprocessor.extractor.read_data(data_path=DATA_PATH, data_DOM=DATA_DOM, condition=self.condition)
 
         LOGGER.info("추출된 기사 개수: " + str(self.preprocessor.extractor.size))
         LOGGER.info("추출된 문장 개수: " + str(self.preprocessor.extractor.context_size))

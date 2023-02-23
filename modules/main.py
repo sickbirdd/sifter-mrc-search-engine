@@ -6,6 +6,8 @@ MRC 모델을 훈련하기 위한 프로그램
 * POST-TRAING
 * FINE-TUNING
 * EVALUATION MODEL
+
+
 """
 
 import yaml
@@ -56,13 +58,16 @@ def main():
     group_post_training.add_argument('--NSP_prob', type=float, default=0.5, help="다음 문장 예측 확률 (기본값: 0.5)")
     group_post_training.add_argument('--mask_prob', type=float, default=0.15, help="마스킹 확률(문장 변경 확률 - 그중 0.8 마스킹 0.1 다른 문장 0.1 변경 X) (기본값: 0.15)")
 
-    # 데이터 셋
-    group_post_training.add_argument('--dataset_path', type=str, default="datasets/lm_post_training/training/LabeledData", help="데이터 셋 경로(기본값: datasets/lm_post_training/training/LabeledData)")
-    group_post_training.add_argument('--dataset_struct', type=str, default="named_entity/*/content/#/sentence", help="데이터 셋 구조(기본값: named_entity/*/content/#/sentence)")
+    # 데이터 셋: 모두의 말뭉치 기사 데이터 셋으로 설정되어 있습니다.
+    group_post_training.add_argument('--dataset_path', type=str, default="datasets/lm_post_training/training/모두의말뭉치", help="데이터 셋 경로(기본값: datasets/lm_post_training/training/모두의말뭉치)")
+    group_post_training.add_argument('--dataset_struct', type=str, default="document/*/paragraph/#/form", help="데이터 셋 구조(기본값: document/*/paragraph/#/form)")
     group_post_training.add_argument('--save_pretrain_path', type=str, help="전처리 데이터셋 중간 저장 경로, 없을 시 해당 기능 사용 안함")
     group_post_training.add_argument('--split', type=int, default=0, help="문장 분리기 사용 여부(기본값: False)")
     group_post_training.add_argument('--extract-path', type=str, help="문장 추출 결과 저장 위치")
     group_post_training.add_argument('--overwrite', type=int, default=0, help="문장 추출 결과 덮어쓰기 여부(기본값: False)")
+    group_post_training.add_argument('--condition-branch', type=str, default="document/*", help="데이터 셋 검색 분기점(기본 값: document/*)")
+    group_post_training.add_argument('--condition-path', type=str, default="metadata/topic", help="데이터 셋 검색 분기점 이후 경로(기본 값: metadata/topi)")
+    group_post_training.add_argument('--condition-value', type=str, default="스포츠", help="데이터 셋 검색 조건 비교 값(기본 값: 스포츠)")
 
     # 모델 관리
     group_post_training.add_argument('--upload_pt', type=str, default="modules/lm_post_training/temp_model", help="모델 저장 경로 (post-training) (기본갑: modules/lm_post_training/temp_model")
@@ -108,10 +113,13 @@ def main():
     if args.type == 'post_training':
         print("POST_TRAINING")
         print(args.do_NSP)
+        conditionDict = {"branch": args.condition_branch.split('/'), "path": args.condition_path.split('/'), "value": args.condition_value} if \
+            args.condition_branch != None and args.condition_path != None and args.condition_value != None else \
+            None
         trainer = Trainer(model_name=args.model_name, 
                 device= torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu'),
                 dataset_path=args.dataset_path,
-                dataset_struct=args.dataset_struct,
+                dataset_struct=args.dataset_struct.split('/'),
                 train_size=args.train_size,
                 epochs=args.epochs,
                 max_length=args.max_length,
@@ -123,7 +131,9 @@ def main():
                 split= True if args.split == 1 else False,
                 extract_path=args.extract_path,
                 overwrite= True if args.overwrite == 1 else False,
-                
+
+                condition=conditionDict,
+
                 do_NSP= True if args.do_NSP == 1 else False,
                 NSP_prob=args.NSP_prob,
                 mask_prob=args.mask_prob
