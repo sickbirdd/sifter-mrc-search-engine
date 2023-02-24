@@ -6,7 +6,7 @@ sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(os.path.abspath(
 
 from modules.lm_post_training.preprocessor import Preprocessor
 from unittest import TestCase, main
-from modules.utils.logging import Test, logging
+from modules.utils.logger import Test, logging
 
 with open('config_log.yaml') as f:
     """ 설정 파일 중 log 관련 설정 파일의 정보를 불러와 설정한다."""
