@@ -2,12 +2,11 @@
 from starlette.applications import Starlette
 from starlette.responses import JSONResponse
 from starlette.exceptions import HTTPException
-from starlette.routing import Route
 from transformers import pipeline
 import asyncio
 
-from file_parser import pdf_parser
-import os
+from file_parser.parser_manager import ParserManager
+from file_parser.pdf_parser import PDFParser
 
 MODEL_NAME = "Kdogs/klue-finetuned-squad_kor_v1"
 MAX_TOP_K = 10
@@ -67,7 +66,13 @@ async def inference_attach_file(request):
             raise HTTPException(status_code=400, detail="파일... 주세요...")
         
         contents = await form["file"].read()
-        content = pdf_parser(contents)
+
+        try:
+            format = form['file'].filename.split('.')[-1]
+            if format == 'pdf':
+                content = ParserManager(Parser=PDFParser()).execute(contents)
+        except:
+            raise HTTPException(status_code=400, detail="이상한 파일")
 
         # 모델에 요청 보내기
         response_q = asyncio.Queue()
@@ -75,6 +80,7 @@ async def inference_attach_file(request):
 
         # 예측 결과값 수령
         outputs = await response_q.get()
+        print("왔다")
         output = []
         for result in outputs:
             output.extend(result)
@@ -94,9 +100,6 @@ async def server_loop(q):
         (response_q, question, context, top_k) = await q.get()
         output = pipe(question=question, context=context)[:top_k]
         await response_q.put(output)
-
-async def parser_loop(q):
-    """paser도 계속 돌면서 반환해 줘야 겠죠... TODO"""
 
 @app.on_event('startup')
 async def startup_event():
