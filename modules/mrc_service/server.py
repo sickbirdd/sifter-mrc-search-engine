@@ -2,6 +2,8 @@
 from starlette.applications import Starlette
 from starlette.responses import JSONResponse
 from starlette.exceptions import HTTPException
+from starlette.requests import Request
+from search_api import title_and_context
 from transformers import pipeline
 import asyncio
 
@@ -17,7 +19,7 @@ app = Starlette()
 
 # localhost:8080/inference?question="..."&context="..." => queue에 질문, 문장 등록
 @app.route("/inference", methods=['GET'])
-async def inference(request):
+async def inference(request: Request):
     """ 추론 작업
 
         example) localhost:8080/inference?question="..."&context="..."
@@ -26,9 +28,8 @@ async def inference(request):
     # GET parameter 검증
     parameters = request.query_params
     question = parameters.get('question')
-    context = parameters.get('context')
-    if question == None or context == None:
-        raise HTTPException(status_code=400, detail="Question과 Context는 필수정보 입니다.")
+    if question == None:
+        raise HTTPException(status_code=400, detail="Question은 필수정보 입니다.")
 
     top_k = parameters.get('top_k')
     top_k = MAX_TOP_K if top_k == None else int(top_k)
@@ -37,6 +38,35 @@ async def inference(request):
     
     domain = parameters.get('domain')
 
+    title, context = title_and_context(question)
+
+    # 모델에 요청 보내기
+    response_q = asyncio.Queue()
+    await request.app.model_queue.put((response_q, question, context, top_k))
+
+    # 예측 결과값 수령
+    output = await response_q.get()
+
+    for i in range(len(output)):
+        output[i]["title"] = title
+        output[i]["content"] = context
+
+    return JSONResponse(output)
+
+@app.route("/inference", methods=['POST'])
+async def inference(request: Request):
+    body = await request.json()
+    if not "question" in body or not "context" in body:
+        raise HTTPException(status_code=400, detail="Question과 Context 필수정보 입니다.")
+    question = body.get("question")
+    context = body.get("context")
+    
+    
+    top_k = body.get('top_k')
+    top_k = MAX_TOP_K if top_k == None else int(top_k)
+    if top_k < 1 or top_k > MAX_TOP_K:
+        raise HTTPException(status_code=400, detail="top_k 속성은 [1,{}]만 허용합니다.".format(MAX_TOP_K))
+    
     # 모델에 요청 보내기
     response_q = asyncio.Queue()
     await request.app.model_queue.put((response_q, question, context, top_k))
