@@ -58,9 +58,9 @@ async def inference(request: Request):
     body = await request.json()
     if not "question" in body or not "context" in body:
         raise HTTPException(status_code=400, detail="Question과 Context 필수정보 입니다.")
+    
     question = body.get("question")
     context = body.get("context")
-    
     
     top_k = body.get('top_k')
     top_k = MAX_TOP_K if top_k == None else int(top_k)
@@ -110,7 +110,6 @@ async def inference_attach_file(request):
 
         # 예측 결과값 수령
         outputs = await response_q.get()
-        print("왔다")
         output = []
         for result in outputs:
             output.extend(result)
