@@ -13,15 +13,14 @@ def extract_pos(sentence):
             new_words.append(word)
     return new_words
 
-def search_api(question: str):
+def search_api(question: str, doc_page_size):
     """검색 엔진 api 서버 호출"""
 
     # 일상문 단어 분리
     word_list = extract_pos(question)
-    question = ""
+    question = ""    
     for word in word_list:
         question += word + " "
-
     QUERY = {
     "commonQuery": question,
     "collection": {
@@ -49,17 +48,20 @@ def search_api(question: str):
             ],
             "paging": {
                 "from": 0,
-                "size": 10
+                "size": doc_page_size
             }
         }
     }
 }
- 
     return requests.post("http://***REMOVED***:7000/search", data=json.dumps(QUERY))
 
-def title_and_context(query):
+def title_and_context(question: str, doc_page_size)->dict:
     try:
-        result = search_api(query)
-        return result.json()["sample"]["document"][0]["fields"]["title"], result.json()["sample"]["document"][0]["fields"]["content"]
+        search_documents = search_api(question, doc_page_size).json()["sample"]["document"]
+        data = {"title":[], "content":[]}
+        for document in search_documents:
+            data["title"].append(document["fields"]["title"])
+            data["content"].append(document["fields"]["content"])
+        return data
     except:
         raise Exception("검색 문서가 없습니다.")
