@@ -116,13 +116,16 @@ async def inference_attach_file(request):
         contents = await form["file"].read()
 
         format = form['file'].filename.split('.')[-1]
-        if format == 'pdf':
-            content = ParserManager(Parser=PDFParser()).execute(contents)
-        elif format == 'docx':
-            content = ParserManager(Parser=DocxParser()).execute(contents)
-        elif format == 'hwp':
-            content = ParserManager(Parser=HwpParser()).execute(contents)
-        else:
+        try:
+            if format == 'pdf':
+                content = ParserManager(Parser=PDFParser()).execute(contents)
+            elif format == 'docx':
+                content = ParserManager(Parser=DocxParser()).execute(contents)
+            elif format == 'hwp':
+                content = ParserManager(Parser=HwpParser()).execute(contents)
+            else:
+                raise HTTPException(status_code=400, detail="허용되지 않은 확장자")
+        except:
             raise HTTPException(status_code=400, detail="이상한 파일")
 
         # 모델에 요청 보내기
