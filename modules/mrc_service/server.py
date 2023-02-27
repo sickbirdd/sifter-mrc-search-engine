@@ -56,10 +56,12 @@ async def inference(request: Request):
 
     # 예측 결과값 수령
     outputs = await response_q.get()
+    if(len(documents["content"]) == 1):
+        outputs = [outputs]
     output = []
-    for document_idx, document in enumerate(outputs):
-        for answer in document:
-            answer["index"] = document_idx
+    for article_idx, article in enumerate(outputs):
+        for answer in article:
+            answer["index"] = article_idx
             output.append(answer)
     output = sorted(output, key=lambda data:data.get('score'), reverse=True)
     for answer in output[:top_k]:

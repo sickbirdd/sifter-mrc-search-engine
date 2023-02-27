@@ -5,7 +5,7 @@ from konlpy.tag import Mecab
 def extract_pos(sentence):
     """문장 분리"""
     mecab = Mecab(dicpath=r"C:/mecab/mecab-ko-dic")
-    pos_list = ['NNG', 'NNP', 'VV', 'VA', 'MAG','MM','NNBC',"SN"]  # 추출할 품사 태그 리스트
+    pos_list = ['NNG', 'NNP', 'VV', 'VA', 'MAG','MM','NNBC','SN', 'SL']  # 추출할 품사 태그 리스트
     words = mecab.pos(sentence)
     new_words = []
     for word, pos in words:
