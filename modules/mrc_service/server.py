@@ -9,12 +9,13 @@ import asyncio
 
 from file_parser.parser_manager import ParserManager
 from file_parser.pdf_parser import PDFParser
+from file_parser.docx_parser import DocxParser
 
 MODEL_NAME = "Kdogs/klue-finetuned-squad_kor_v1"
 MAX_TOP_K = 10
 MAX_DOC_PAGE_SIZE = 10
 DOMAINS = ["Sports, IT, ERICA"] #TODO ENUM
-ALLOWED_EXTENSIONS = set(['pdf']) # 허용된 확장자 관리
+ALLOWED_EXTENSIONS = set(['pdf', 'docx']) # 허용된 확장자 관리
 
 app = Starlette()
 
@@ -113,11 +114,12 @@ async def inference_attach_file(request):
         
         contents = await form["file"].read()
 
-        try:
-            format = form['file'].filename.split('.')[-1]
-            if format == 'pdf':
-                content = ParserManager(Parser=PDFParser()).execute(contents)
-        except:
+        format = form['file'].filename.split('.')[-1]
+        if format == 'pdf':
+            content = ParserManager(Parser=PDFParser()).execute(contents)
+        elif format == 'docx':
+            content = ParserManager(Parser=DocxParser()).execute(contents)
+        else:
             raise HTTPException(status_code=400, detail="이상한 파일")
 
         # 모델에 요청 보내기
@@ -126,10 +128,11 @@ async def inference_attach_file(request):
 
         # 예측 결과값 수령
         outputs = await response_q.get()
+        if(len(content) == 1):
+            outputs = [outputs]
         output = []
         for result in outputs:
             output.extend(result)
-        
         output = sorted(output, key=lambda data:data.get('score'), reverse=True)
     return JSONResponse(output[:top_k])
 
