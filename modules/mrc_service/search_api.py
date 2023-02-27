@@ -21,7 +21,6 @@ def search_api(question: str):
     question = ""
     for word in word_list:
         question += word + " "
-    print(question)
 
     QUERY = {
     "commonQuery": question,
