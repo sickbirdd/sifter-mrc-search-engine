@@ -1,7 +1,28 @@
 import requests
 import json
+from konlpy.tag import Mecab
+
+def extract_pos(sentence):
+    """문장 분리"""
+    mecab = Mecab(dicpath=r"C:/mecab/mecab-ko-dic")
+    pos_list = ['NNG', 'NNP', 'VV', 'VA', 'MAG','MM','NNBC',"SN"]  # 추출할 품사 태그 리스트
+    words = mecab.pos(sentence)
+    new_words = []
+    for word, pos in words:
+        if pos in pos_list:
+            new_words.append(word)
+    return new_words
 
 def search_api(question: str):
+    """검색 엔진 api 서버 호출"""
+
+    # 일상문 단어 분리
+    word_list = extract_pos(question)
+    question = ""
+    for word in word_list:
+        question += word + " "
+    print(question)
+
     QUERY = {
     "commonQuery": question,
     "collection": {
