@@ -12,6 +12,7 @@ from file_parser.pdf_parser import PDFParser
 
 MODEL_NAME = "Kdogs/klue-finetuned-squad_kor_v1"
 MAX_TOP_K = 10
+MAX_DOC_PAGE_SIZE = 10
 DOMAINS = ["Sports, IT, ERICA"] #TODO ENUM
 ALLOWED_EXTENSIONS = set(['pdf']) # 허용된 확장자 관리
 
@@ -36,25 +37,35 @@ async def inference(request: Request):
     if top_k < 1 or top_k > MAX_TOP_K:
         raise HTTPException(status_code=400, detail="top_k 속성은 [1,{}]만 허용합니다.".format(MAX_TOP_K))
     
-    domain = parameters.get('domain')
-
+    doc_page_size = parameters.get('doc_page_size')
+    doc_page_size = MAX_DOC_PAGE_SIZE if doc_page_size == None else int(doc_page_size)
+    if doc_page_size < 1 or doc_page_size > MAX_DOC_PAGE_SIZE:
+        raise HTTPException(status_code=400, detail="doc_page_size 속성은 [1,{}]만 허용합니다.".format(MAX_DOC_PAGE_SIZE))
+    
+    # TODO 
+    # domain = parameters.get('domain')
+    
     try:
-        title, context = title_and_context(question)
+        documents = title_and_context(question, doc_page_size)
     except:
         raise HTTPException(status_code=404, detail="검색된 문서가 없습니다.")
 
     # 모델에 요청 보내기
     response_q = asyncio.Queue()
-    await request.app.model_queue.put((response_q, question, context, top_k))
+    await request.app.model_queue.put((response_q, [question for _ in range(len(documents["content"]))], documents["content"], top_k))
 
     # 예측 결과값 수령
-    output = await response_q.get()
-
-    for i in range(len(output)):
-        output[i]["title"] = title
-        output[i]["content"] = context
-
-    return JSONResponse(output)
+    outputs = await response_q.get()
+    output = []
+    for document_idx, document in enumerate(outputs):
+        for answer in document:
+            answer["index"] = document_idx
+            output.append(answer)
+    output = sorted(output, key=lambda data:data.get('score'), reverse=True)
+    for answer in output[:top_k]:
+        answer["title"] = documents["title"][answer["index"]]
+        answer["content"] = documents["content"][answer["index"]]
+    return JSONResponse(output[:top_k])
 
 @app.route("/inference", methods=['POST'])
 async def inference(request: Request):
@@ -118,7 +129,7 @@ async def inference_attach_file(request):
             output.extend(result)
         
         output = sorted(output, key=lambda data:data.get('score'), reverse=True)
-    return JSONResponse(output)
+    return JSONResponse(output[:top_k])
 
 async def server_loop(q):
     """ 서버 모델 파이프라인
@@ -131,6 +142,7 @@ async def server_loop(q):
     while True:
         (response_q, question, context, top_k) = await q.get()
         output = pipe(question=question, context=context)[:top_k]
+        # print(output)
         await response_q.put(output)
 
 @app.on_event('startup')
