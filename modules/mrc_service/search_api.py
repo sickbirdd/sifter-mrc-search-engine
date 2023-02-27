@@ -58,5 +58,8 @@ def search_api(question: str):
     return requests.post("http://***REMOVED***:7000/search", data=json.dumps(QUERY))
 
 def title_and_context(query):
-    result = search_api(query)
-    return result.json()["sample"]["document"][0]["fields"]["title"], result.json()["sample"]["document"][0]["fields"]["content"]
+    try:
+        result = search_api(query)
+        return result.json()["sample"]["document"][0]["fields"]["title"], result.json()["sample"]["document"][0]["fields"]["content"]
+    except:
+        raise Exception("검색 문서가 없습니다.")

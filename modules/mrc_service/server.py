@@ -38,7 +38,10 @@ async def inference(request: Request):
     
     domain = parameters.get('domain')
 
-    title, context = title_and_context(question)
+    try:
+        title, context = title_and_context(question)
+    except:
+        raise HTTPException(status_code=404, detail="검색된 문서가 없습니다.")
 
     # 모델에 요청 보내기
     response_q = asyncio.Queue()
