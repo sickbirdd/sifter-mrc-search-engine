@@ -1,4 +1,3 @@
-
 from tika import parser
 from file_parser.ab_parser import Parser
 

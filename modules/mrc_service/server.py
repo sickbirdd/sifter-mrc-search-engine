@@ -10,12 +10,13 @@ import asyncio
 from file_parser.parser_manager import ParserManager
 from file_parser.pdf_parser import PDFParser
 from file_parser.docx_parser import DocxParser
+from file_parser.hwp_parser import HwpParser
 
 MODEL_NAME = "Kdogs/klue-finetuned-squad_kor_v1"
 MAX_TOP_K = 10
 MAX_DOC_PAGE_SIZE = 10
 DOMAINS = ["Sports, IT, ERICA"] #TODO ENUM
-ALLOWED_EXTENSIONS = set(['pdf', 'docx']) # 허용된 확장자 관리
+ALLOWED_EXTENSIONS = set(['pdf', 'docx', 'hwp']) # 허용된 확장자 관리
 
 app = Starlette()
 
@@ -119,6 +120,8 @@ async def inference_attach_file(request):
             content = ParserManager(Parser=PDFParser()).execute(contents)
         elif format == 'docx':
             content = ParserManager(Parser=DocxParser()).execute(contents)
+        elif format == 'hwp':
+            content = ParserManager(Parser=HwpParser()).execute(contents)
         else:
             raise HTTPException(status_code=400, detail="이상한 파일")
 
