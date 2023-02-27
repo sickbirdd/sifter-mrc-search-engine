@@ -24,6 +24,7 @@ MRC 모델의 핵심적인 사용 기능입니다.
 Python
 Starlette
 trainsformer
+Mecab 설치(윈도우 시: https://wonhwa.tistory.com/49 참조)
 
 ## 시작
 
