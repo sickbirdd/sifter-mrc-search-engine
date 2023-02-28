@@ -59,8 +59,8 @@ class HwpParser(Parser):
 
         return text
     
-    def parse(self, buffer, length, cond_split="\n") -> list:
-        content = self.parser_buffer(buffer)
-        print(content)
-        paragragh_list = [paragragh for paragragh in content.split(cond_split) if len(paragragh) > length]
+    def parse(self, buffer, length, cond_split="\n\n\n") -> list:
+        content = self.parser_buffer(buffer).replace("\n", "").replace("\r", "").replace("\x02捤獥\x00\x00\x00\x00\x02\x02汤捯\x00\x00\x00\x00\x02", "")
+        paragragh_list = [content]
+        print(paragragh_list)
         return paragragh_list
