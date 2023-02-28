@@ -12,7 +12,7 @@ class ParserManager():
     def __init__(self, Parser: Parser) -> None:
         self.manager = Parser
 
-    def execute(self, buffer) -> list:
+    def execute(self, buffer, length = MIN_LENGTH) -> list:
         LOGGER.debug("buffer가 입력되었습니다.")
 
         # DO PREPROCESS ?
@@ -20,4 +20,4 @@ class ParserManager():
 
         # parsing 진행
         
-        return self.manager.parse(buffer=buffer, length = MIN_LENGTH)
+        return self.manager.parse(buffer=buffer, length = length)

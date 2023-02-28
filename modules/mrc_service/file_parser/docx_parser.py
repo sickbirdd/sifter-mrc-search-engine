@@ -1,13 +1,18 @@
-from tika import parser
+import docx2txt
+from io import BytesIO
 from file_parser.ab_parser import Parser
 
-class PDFParser(Parser):
+class DocxParser(Parser):
 
     def parser_buffer(self, buffer):
-        return parser.from_buffer(buffer)
+        file = BytesIO(buffer)
+        doc = docx2txt.process(file)
+        file.close()
+
+        return doc
     
     def parse(self, buffer, length, cond_split="\n\n\n") -> list:
-        data = self.parser_buffer(buffer)
-        content = data['content']
+        content = self.parser_buffer(buffer)
+
         paragragh_list = [paragragh for paragragh in content.split(cond_split) if len(paragragh) > length]
         return paragragh_list
