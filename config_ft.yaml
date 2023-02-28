@@ -1,0 +1,27 @@
+parameters:
+  epochs: 3
+  max_length: 512
+  metric_type: squad
+  stride: 128
+  n_best: 20
+  max_answer_length: 30
+  train_batch: 16
+  eval_batch: 16
+  learning_rate: 0.00005
+  weight_decay: 0.01
+  fp16: False
+  push_to_hub: False
+  login_token: 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
+  exec: eval
+model:
+    train:
+      name: klue/bert-base
+    eval:
+      name: Kdogs/klue-finetuned-squad_kor_v1
+    upload: modules/mrc_fine_tuning/eval_model
+dataset:
+  training_path: squad_kor_v1
+  raw_path: datasets/mrc_fine_tuning/raw/TL_span_extraction.json
+  test_path: datasets/mrc_fine_tuning/test/sports_domain_test.json
+log:
+  steps: 500
