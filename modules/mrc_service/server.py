@@ -11,12 +11,13 @@ from file_parser.parser_manager import ParserManager
 from file_parser.pdf_parser import PDFParser
 from file_parser.docx_parser import DocxParser
 from file_parser.hwp_parser import HwpParser
+from file_parser.ppt_parser import PPTXParser
 
 MODEL_NAME = "Kdogs/klue-finetuned-squad_kor_v1"
 MAX_TOP_K = 10
 MAX_DOC_PAGE_SIZE = 10
 DOMAINS = ["Sports, IT, ERICA"] #TODO ENUM
-ALLOWED_EXTENSIONS = set(['pdf', 'docx', 'hwp']) # 허용된 확장자 관리
+ALLOWED_EXTENSIONS = set(['pdf', 'docx', 'hwp', 'pptx']) # 허용된 확장자 관리
 
 app = Starlette()
 
@@ -116,17 +117,19 @@ async def inference_attach_file(request):
         contents = await form["file"].read()
 
         format = form['file'].filename.split('.')[-1]
-        try:
-            if format == 'pdf':
-                content = ParserManager(Parser=PDFParser()).execute(contents)
-            elif format == 'docx':
-                content = ParserManager(Parser=DocxParser()).execute(contents)
-            elif format == 'hwp':
-                content = ParserManager(Parser=HwpParser()).execute(contents)
-            else:
-                raise HTTPException(status_code=400, detail="허용되지 않은 확장자")
-        except:
-            raise HTTPException(status_code=400, detail="이상한 파일")
+        # try:
+        if format == 'pdf':
+            content = ParserManager(Parser=PDFParser()).execute(contents)
+        elif format == 'docx':
+            content = ParserManager(Parser=DocxParser()).execute(contents)
+        elif format == 'hwp':
+            content = ParserManager(Parser=HwpParser()).execute(contents)
+        elif format == 'pptx':
+            content = ParserManager(Parser=PPTXParser()).execute(contents, 5)
+        else:
+            raise HTTPException(status_code=400, detail="허용되지 않은 확장자")
+        # except:
+        #     raise HTTPException(status_code=400, detail="이상한 파일")
 
         # 모델에 요청 보내기
         response_q = asyncio.Queue()

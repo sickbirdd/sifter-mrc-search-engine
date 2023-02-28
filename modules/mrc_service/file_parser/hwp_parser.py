@@ -1,7 +1,6 @@
 import olefile
 
 from file_parser.ab_parser import Parser
-from io import BytesIO
 
 class HwpParser(Parser):
 
