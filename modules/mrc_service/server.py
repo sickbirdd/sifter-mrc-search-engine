@@ -12,12 +12,13 @@ from file_parser.pdf_parser import PDFParser
 from file_parser.docx_parser import DocxParser
 from file_parser.hwp_parser import HwpParser
 from file_parser.ppt_parser import PPTXParser
+from file_parser.text_parser import TextParser 
 
 MODEL_NAME = "Kdogs/klue-finetuned-squad_kor_v1"
 MAX_TOP_K = 10
 MAX_DOC_PAGE_SIZE = 10
 DOMAINS = ["Sports, IT, ERICA"] #TODO ENUM
-ALLOWED_EXTENSIONS = set(['pdf', 'docx', 'hwp', 'pptx']) # 허용된 확장자 관리
+ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'docx', 'hwp', 'pptx']) # 허용된 확장자 관리
 
 app = Starlette()
 
@@ -118,7 +119,9 @@ async def inference_attach_file(request):
 
         format = form['file'].filename.split('.')[-1]
         try:
-            if format == 'pdf':
+            if format == 'txt':
+                content = ParserManager(Parser=TextParser()).execute(contents)
+            elif format == 'pdf':
                 content = ParserManager(Parser=PDFParser()).execute(contents)
             elif format == 'docx':
                 content = ParserManager(Parser=DocxParser()).execute(contents)
