@@ -17,7 +17,7 @@ MODEL_NAME = "Kdogs/klue-finetuned-squad_kor_v1"
 MAX_TOP_K = 10
 MAX_DOC_PAGE_SIZE = 10
 DOMAINS = ["Sports, IT, ERICA"] #TODO ENUM
-ALLOWED_EXTENSIONS = set(['pdf', 'docx', 'pptx']) # 허용된 확장자 관리
+ALLOWED_EXTENSIONS = set(['pdf', 'docx', 'hwp', 'pptx']) # 허용된 확장자 관리
 
 app = Starlette()
 
@@ -122,8 +122,8 @@ async def inference_attach_file(request):
                 content = ParserManager(Parser=PDFParser()).execute(contents)
             elif format == 'docx':
                 content = ParserManager(Parser=DocxParser()).execute(contents)
-            # elif format == 'hwp':
-            #     content = ParserManager(Parser=HwpParser()).execute(contents)
+            elif format == 'hwp':
+                content = ParserManager(Parser=HwpParser()).execute(contents)
             elif format == 'pptx':
                 content = ParserManager(Parser=PPTXParser()).execute(contents, 5)
             else:
