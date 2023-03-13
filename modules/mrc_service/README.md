@@ -103,7 +103,7 @@ parameters
 ---
 
 * question(**필수**) :  질문
-* content(**필수**) : 문장
+* context(**필수**) : 문장
 * top_k : 원하는 정보 개수
 
 response

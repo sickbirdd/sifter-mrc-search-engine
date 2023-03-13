@@ -21,6 +21,21 @@ DOMAINS = ["Sports, IT, ERICA"] #TODO ENUM
 ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'docx', 'hwp', 'pptx']) # 허용된 확장자 관리
 
 app = Starlette()
+def validate_question(question: str):
+    if question == None:
+        raise HTTPException(status_code=400, detail="Question은 필수정보 입니다.")
+    elif len(question) == 0:
+        raise HTTPException(status_code=400, detail="Question은 공백을 허용하지 않습니다.")
+    
+def validate_top_k(top_k: int):
+    top_k = MAX_TOP_K if top_k == None else int(top_k)
+    if top_k < 1 or top_k > MAX_TOP_K:
+        raise HTTPException(status_code=400, detail="top_k 속성은 [1,{}]만 허용합니다.".format(MAX_TOP_K))
+    
+def validate_doc_page_size(doc_page_size: int):
+    doc_page_size = MAX_DOC_PAGE_SIZE if doc_page_size == None else int(doc_page_size)
+    if doc_page_size < 1 or doc_page_size > MAX_DOC_PAGE_SIZE:
+        raise HTTPException(status_code=400, detail="doc_page_size 속성은 [1,{}]만 허용합니다.".format(MAX_DOC_PAGE_SIZE))
 
 # localhost:8080/inference?question="..."&context="..." => queue에 질문, 문장 등록
 @app.route("/inference", methods=['GET'])
@@ -33,18 +48,15 @@ async def inference(request: Request):
     # GET parameter 검증
     parameters = request.query_params
     question = parameters.get('question')
-    if question == None:
-        raise HTTPException(status_code=400, detail="Question은 필수정보 입니다.")
+    validate_question(question)
 
     top_k = parameters.get('top_k')
     top_k = MAX_TOP_K if top_k == None else int(top_k)
-    if top_k < 1 or top_k > MAX_TOP_K:
-        raise HTTPException(status_code=400, detail="top_k 속성은 [1,{}]만 허용합니다.".format(MAX_TOP_K))
+    validate_top_k(top_k)
     
     doc_page_size = parameters.get('doc_page_size')
     doc_page_size = MAX_DOC_PAGE_SIZE if doc_page_size == None else int(doc_page_size)
-    if doc_page_size < 1 or doc_page_size > MAX_DOC_PAGE_SIZE:
-        raise HTTPException(status_code=400, detail="doc_page_size 속성은 [1,{}]만 허용합니다.".format(MAX_DOC_PAGE_SIZE))
+    validate_doc_page_size(doc_page_size)
     
     # TODO 
     # domain = parameters.get('domain')
@@ -59,7 +71,7 @@ async def inference(request: Request):
     await request.app.model_queue.put((response_q, [question for _ in range(len(documents["content"]))], documents["content"], top_k))
 
     # 예측 결과값 수령
-    outputs = await response_q.get()
+    outputs = await parse_loop_message(response_q=response_q)
     if(len(documents["content"]) == 1):
         outputs = [outputs]
     output = []
@@ -92,9 +104,11 @@ async def inference(request: Request):
     await request.app.model_queue.put((response_q, question, context, top_k))
 
     # 예측 결과값 수령
-    output = await response_q.get()
+    outputs = await parse_loop_message(response_q=response_q)
+    for output in outputs:
+        output['context'] = context
 
-    return JSONResponse(output)
+    return JSONResponse(outputs)
 
 # POST localhost:8080/inference/file + form data("question": ..., "file": [file])
 # TODO pdf_parser => parser_factory
@@ -139,14 +153,38 @@ async def inference_attach_file(request):
         await request.app.model_queue.put((response_q, [question for _ in range(len(content))], content, top_k))
 
         # 예측 결과값 수령
-        outputs = await response_q.get()
+        outputs = await parse_loop_message(response_q=response_q)
         if(len(content) == 1):
             outputs = [outputs]
         output = []
-        for result in outputs:
-            output.extend(result)
+        for passage_idx, document in enumerate(outputs):
+            for answer in document:
+                answer["index"] = passage_idx
+                output.append(answer)
         output = sorted(output, key=lambda data:data.get('score'), reverse=True)
+
+        for answer in output[:top_k]:
+            answer["content"] = content[answer["index"]]
+
+        """
+            for article_idx, article in enumerate(outputs):
+                for answer in article:
+                    answer["index"] = article_idx
+                    output.append(answer)
+            output = sorted(output, key=lambda data:data.get('score'), reverse=True)
+            for answer in output[:top_k]:
+                answer["title"] = documents["title"][answer["index"]]
+                answer["content"] = documents["content"][answer["index"]]
+        """
     return JSONResponse(output[:top_k])
+
+async def parse_loop_message(response_q: asyncio.Queue):
+    """모델 예측 결과 메세지를 받아 필요한 값으로 변환한다."""
+    # 모델 예측 성공 여부 반환
+    result = await response_q.get()
+    if result != True:
+        raise HTTPException(status_code=400, detail="모델 예측 과정에서 예상치 못한 오류가 발생하였습니다.")
+    return await response_q.get()
 
 async def server_loop(q):
     """ 서버 모델 파이프라인
@@ -158,8 +196,13 @@ async def server_loop(q):
     pipe = pipeline("question-answering", model=MODEL_NAME, top_k = MAX_TOP_K)
     while True:
         (response_q, question, context, top_k) = await q.get()
-        output = pipe(question=question, context=context)[:top_k]
-        # print(output)
+        try:
+            output = pipe(question=question, context=context)[:top_k]
+        except:
+            await response_q.put(False)
+            continue
+        
+        await response_q.put(True)
         await response_q.put(output)
 
 @app.on_event('startup')
