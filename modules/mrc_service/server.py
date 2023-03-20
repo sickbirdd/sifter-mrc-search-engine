@@ -3,16 +3,16 @@ from starlette.applications import Starlette
 from starlette.responses import JSONResponse
 from starlette.exceptions import HTTPException
 from starlette.requests import Request
-from search_api import title_and_context
+from modules.mrc_service.search_api import title_and_context
 from transformers import pipeline
 import asyncio
 
-from file_parser.parser_manager import ParserManager
-from file_parser.pdf_parser import PDFParser
-from file_parser.docx_parser import DocxParser
-from file_parser.hwp_parser import HwpParser
-from file_parser.ppt_parser import PPTXParser
-from file_parser.text_parser import TextParser 
+from modules.mrc_service.file_parser.parser_manager import ParserManager
+from modules.mrc_service.file_parser.pdf_parser import PDFParser
+from modules.mrc_service.file_parser.docx_parser import DocxParser
+from modules.mrc_service.file_parser.hwp_parser import HwpParser
+from modules.mrc_service.file_parser.ppt_parser import PPTXParser
+from modules.mrc_service.file_parser.text_parser import TextParser 
 
 MODEL_NAME = "Kdogs/klue-finetuned-squad_kor_v1"
 MAX_TOP_K = 10
@@ -22,17 +22,20 @@ ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'docx', 'hwp', 'pptx']) # 허용된 확�
 
 app = Starlette()
 def validate_question(question: str):
+    """질문 입력값을 검증한다."""
     if question == None:
         raise HTTPException(status_code=400, detail="Question은 필수정보 입니다.")
     elif len(question) == 0:
         raise HTTPException(status_code=400, detail="Question은 공백을 허용하지 않습니다.")
     
 def validate_top_k(top_k: int):
+    """TOP_K 입력 값을 검증한다."""
     top_k = MAX_TOP_K if top_k == None else int(top_k)
     if top_k < 1 or top_k > MAX_TOP_K:
         raise HTTPException(status_code=400, detail="top_k 속성은 [1,{}]만 허용합니다.".format(MAX_TOP_K))
     
 def validate_doc_page_size(doc_page_size: int):
+    """document page size 입력 값을 검증한다."""
     doc_page_size = MAX_DOC_PAGE_SIZE if doc_page_size == None else int(doc_page_size)
     if doc_page_size < 1 or doc_page_size > MAX_DOC_PAGE_SIZE:
         raise HTTPException(status_code=400, detail="doc_page_size 속성은 [1,{}]만 허용합니다.".format(MAX_DOC_PAGE_SIZE))
@@ -165,17 +168,7 @@ async def inference_attach_file(request):
 
         for answer in output[:top_k]:
             answer["content"] = content[answer["index"]]
-
-        """
-            for article_idx, article in enumerate(outputs):
-                for answer in article:
-                    answer["index"] = article_idx
-                    output.append(answer)
-            output = sorted(output, key=lambda data:data.get('score'), reverse=True)
-            for answer in output[:top_k]:
-                answer["title"] = documents["title"][answer["index"]]
-                answer["content"] = documents["content"][answer["index"]]
-        """
+            
     return JSONResponse(output[:top_k])
 
 async def parse_loop_message(response_q: asyncio.Queue):

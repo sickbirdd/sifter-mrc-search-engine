@@ -32,7 +32,7 @@ Mecab dictionary 설치 경로
 
 ## 시작
 
-uvicorn server:app
+### **<span style="color: #2D3748; background-color:#fff5b1;">uvicorn modules.mrc_service.server:app</span>**
 
 ## Inference 예제
 
