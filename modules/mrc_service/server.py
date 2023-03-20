@@ -28,6 +28,14 @@ def validate_question(question: str):
     elif len(question) == 0:
         raise HTTPException(status_code=400, detail="Question은 공백을 허용하지 않습니다.")
     
+def validate_context(context: str):
+    """문장 입력값을 검증한다."""
+    if context == None:
+        raise HTTPException(status_code=400, detail="Context는 필수정보 입니다.")
+    elif len(context) == 0:
+        raise HTTPException(status_code=400, detail="Context는 공백을 허용하지 않습니다.")
+
+    
 def validate_top_k(top_k: int):
     """TOP_K 입력 값을 검증한다."""
     top_k = MAX_TOP_K if top_k == None else int(top_k)
@@ -91,16 +99,15 @@ async def inference(request: Request):
 @app.route("/inference", methods=['POST'])
 async def inference(request: Request):
     body = await request.json()
-    if not "question" in body or not "context" in body:
-        raise HTTPException(status_code=400, detail="Question과 Context 필수정보 입니다.")
     
     question = body.get("question")
+    validate_question(question)
+
     context = body.get("context")
+    validate_context(context)
     
     top_k = body.get('top_k')
-    top_k = MAX_TOP_K if top_k == None else int(top_k)
-    if top_k < 1 or top_k > MAX_TOP_K:
-        raise HTTPException(status_code=400, detail="top_k 속성은 [1,{}]만 허용합니다.".format(MAX_TOP_K))
+    validate_top_k(top_k)
     
     # 모델에 요청 보내기
     response_q = asyncio.Queue()
@@ -120,17 +127,14 @@ async def inference_attach_file(request):
     """파일에서 질문 MRC 진행"""
 
     async with request.form(max_files=1000, max_fields=1000) as form:
-        if not "question" in form:
-            raise HTTPException(status_code=400, detail="Question은 필수정보 입니다.")
         question = form.get('question')
+        validate_question(question)
 
         top_k = form.get('top_k')
-        top_k = MAX_TOP_K if top_k == None else int(top_k)
-        if top_k < 1 or top_k > MAX_TOP_K:
-            raise HTTPException(status_code=400, detail="top_k 속성은 [1,{}]만 허용합니다.".format(MAX_TOP_K))
+        validate_top_k(top_k)
 
         if not "file" in form:
-            raise HTTPException(status_code=400, detail="파일... 주세요...")
+            raise HTTPException(status_code=400, detail="파일이 입력되지 않은 것 같습니다.")
         
         contents = await form["file"].read()
 
@@ -147,9 +151,9 @@ async def inference_attach_file(request):
             elif format == 'pptx':
                 content = ParserManager(Parser=PPTXParser()).execute(contents, 5)
             else:
-                raise HTTPException(status_code=400, detail="허용되지 않은 확장자")
+                raise HTTPException(status_code=400, detail="허용되지 않은 확장자입니다.")
         except:
-            raise HTTPException(status_code=400, detail="이상한 파일")
+            raise HTTPException(status_code=400, detail="이상한 파일: 서버 관리자에게 요청하세요.")
 
         # 모델에 요청 보내기
         response_q = asyncio.Queue()
