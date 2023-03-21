@@ -116,7 +116,7 @@ async def inference(request: Request):
     # 예측 결과값 수령
     outputs = await parse_loop_message(response_q=response_q)
     for output in outputs:
-        output['context'] = context
+        output['content'] = context
 
     return JSONResponse(outputs)
 
