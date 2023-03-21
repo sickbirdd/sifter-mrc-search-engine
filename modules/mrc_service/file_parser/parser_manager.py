@@ -1,4 +1,4 @@
-from file_parser.ab_parser import Parser
+from modules.mrc_service.file_parser.ab_parser import Parser
 import logging
 
 LOGGER = logging.getLogger()
