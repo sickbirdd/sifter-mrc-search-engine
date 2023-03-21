@@ -3,7 +3,7 @@ from starlette.applications import Starlette
 from starlette.responses import JSONResponse
 from starlette.exceptions import HTTPException
 from starlette.requests import Request
-from search_api import title_and_context
+from search_api import title_and_context, eliminate_final_postposition
 from transformers import pipeline
 import asyncio
 
@@ -69,6 +69,8 @@ async def inference(request: Request):
             output.append(answer)
     output = sorted(output, key=lambda data:data.get('score'), reverse=True)
     for answer in output[:top_k]:
+        answer['raw_answer'] = answer["answer"]
+        answer['answer'] = eliminate_final_postposition(answer['answer'])
         answer["title"] = documents["title"][answer["index"]]
         answer["content"] = documents["content"][answer["index"]]
     return JSONResponse(output[:top_k])
