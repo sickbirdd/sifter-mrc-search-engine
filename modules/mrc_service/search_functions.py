@@ -21,25 +21,27 @@ def extract_pos(sentence):
             new_words.append(word)
     return new_words
 
-def vaild_parentheses(sentence):
-    st = []
+def vaild_parentheses(sentence: str) -> bool:
+    """괄호가 적절한 문법을 만족하는지 검증한다."""
+
+    parentheses_statck = []
 
     for ch in sentence:
         if ch == '(' or ch == '[' or ch == '{':
-            st.append(ch)
+            parentheses_statck.append(ch)
         elif (ch == ')' or ch == ']' or ch == '}'):
-            if len(st) == 0:
+            if len(parentheses_statck) == 0:
                 return False
-            elif ch == ')' and st[-1] == '(':
-                st.pop()
-            elif ch == ']' and st[-1] == '[':
-                st.pop()
-            elif ch == '}' and st[-1] == '{':
-                st.pop()
+            elif ch == ')' and parentheses_statck[-1] == '(':
+                parentheses_statck.pop()
+            elif ch == ']' and parentheses_statck[-1] == '[':
+                parentheses_statck.pop()
+            elif ch == '}' and parentheses_statck[-1] == '{':
+                parentheses_statck.pop()
             else:
                 return False
         
-    return len(st) == 0
+    return len(parentheses_statck) == 0
 
 def eliminate_final_postposition(sentence: str):
     """종결 조사 제거"""
