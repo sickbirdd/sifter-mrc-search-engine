@@ -14,7 +14,6 @@ MODEL_NAME = "Kdogs/klue-finetuned-squad_kor_v1"
 MAX_TOP_K = 10
 MAX_DOC_PAGE_SIZE = 10
 DOMAINS = ["Sports, IT, ERICA"] #TODO ENUM
-ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'docx', 'hwp', 'pptx']) # 허용된 확장자 관리
 
 app = Starlette()
 
@@ -123,7 +122,6 @@ async def inference(request: Request):
     return JSONResponse(outputs)
 
 # POST localhost:8080/inference/file + form data("question": ..., "file": [file])
-# TODO pdf_parser => parser_factory
 @app.route("/inference/file", methods=['POST'])
 async def inference_attach_file(request):
     """파일에서 질문 MRC 진행"""
