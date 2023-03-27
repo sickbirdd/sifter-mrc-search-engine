@@ -4,8 +4,10 @@ import olefile
 import zlib
 import struct
 
-from modules.mrc_service.file_parser.ab_parser import Parser
+from modules.mrc_service.file_parser.parser_interface import Parser
+from modules.mrc_service.file_parser.utils import singleton
 
+@singleton
 class HwpParser(Parser):
 
     def parser_buffer(self, buffer):

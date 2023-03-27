@@ -9,11 +9,6 @@ import asyncio
 import torch
 
 from modules.mrc_service.file_parser.parser_manager import ParserManager
-from modules.mrc_service.file_parser.pdf_parser import PDFParser
-from modules.mrc_service.file_parser.docx_parser import DocxParser
-from modules.mrc_service.file_parser.hwp_parser import HwpParser
-from modules.mrc_service.file_parser.ppt_parser import PPTXParser
-from modules.mrc_service.file_parser.text_parser import TextParser 
 
 MODEL_NAME = "Kdogs/klue-finetuned-squad_kor_v1"
 MAX_TOP_K = 10
@@ -146,19 +141,14 @@ async def inference_attach_file(request):
         contents = await form["file"].read()
 
         format = form['file'].filename.split('.')[-1]
+
+        # 파일 파싱하여 본문 추출
+        pm = ParserManager()
+        pm.setup()
         try:
-            if format == 'txt':
-                content = ParserManager(Parser=TextParser()).execute(contents)
-            elif format == 'pdf':
-                content = ParserManager(Parser=PDFParser()).execute(contents)
-            elif format == 'docx':
-                content = ParserManager(Parser=DocxParser()).execute(contents)
-            elif format == 'hwp':
-                content = ParserManager(Parser=HwpParser()).execute(contents)
-            elif format == 'pptx':
-                content = ParserManager(Parser=PPTXParser()).execute(contents, 5)
-            else:
-                raise HTTPException(status_code=400, detail="허용되지 않은 확장자입니다.")
+            content = pm.execute(contents, format)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="지원하지 않는 확장자입니다.")
         except:
             raise HTTPException(status_code=400, detail="이상한 파일: 서버 관리자에게 요청하세요.")
 
