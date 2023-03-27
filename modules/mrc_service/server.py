@@ -6,6 +6,7 @@ from starlette.requests import Request
 from modules.mrc_service.search_api import title_and_context, eliminate_final_postposition
 from transformers import pipeline
 import asyncio
+import torch
 
 from modules.mrc_service.file_parser.parser_manager import ParserManager
 from modules.mrc_service.file_parser.pdf_parser import PDFParser
@@ -21,6 +22,7 @@ DOMAINS = ["Sports, IT, ERICA"] #TODO ENUM
 ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'docx', 'hwp', 'pptx']) # 허용된 확장자 관리
 
 app = Starlette()
+
 def validate_question(question: str):
     """질문 입력값을 검증한다."""
     if question == None:
@@ -197,7 +199,11 @@ async def server_loop(q):
     
     간단히 무한히 돌면서 결과값을 반환한다.
     """
-    pipe = pipeline("question-answering", model=MODEL_NAME, top_k = MAX_TOP_K)
+    if torch.cuda.is_available():
+        print("cuda로 실행되었습니다.")
+        pipe = pipeline("question-answering", model=MODEL_NAME, top_k = MAX_TOP_K, device=0)
+    else:
+        pipe = pipeline("question-answering", model=MODEL_NAME, top_k = MAX_TOP_K)
     while True:
         (response_q, question, context, top_k) = await q.get()
         try:
