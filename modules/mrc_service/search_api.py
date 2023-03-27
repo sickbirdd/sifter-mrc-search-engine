@@ -21,6 +21,26 @@ def extract_pos(sentence):
             new_words.append(word)
     return new_words
 
+def vaild_parentheses(sentence):
+    st = []
+
+    for ch in sentence:
+        if ch == '(' or ch == '[' or ch == '{':
+            st.append(ch)
+        elif (ch == ')' or ch == ']' or ch == '}'):
+            if len(st) == 0:
+                return False
+            elif ch == ')' and st[-1] == '(':
+                st.pop()
+            elif ch == ']' and st[-1] == '[':
+                st.pop()
+            elif ch == '}' and st[-1] == '{':
+                st.pop()
+            else:
+                return False
+        
+    return len(st) == 0
+
 def eliminate_final_postposition(sentence: str):
     """종결 조사 제거"""
     # 제거할 품사 태그 리스트
@@ -31,8 +51,13 @@ def eliminate_final_postposition(sentence: str):
     words = mecab.pos(sentence)
     words = list(filter(lambda word_pos: word_pos[1] in pos_list, words))
 
+    is_coolect_parentheses = vaild_parentheses(sentence)
+
     for word_pos in reversed(words):
         word = word_pos[0]
+        pos = word_pos[1]
+        if is_coolect_parentheses and pos == 'SSO' or pos == 'SSC':
+            break
         if sentence[-len(word):] == word:
             sentence = sentence[:-len(word)]
         else:
