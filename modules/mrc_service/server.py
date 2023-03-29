@@ -155,6 +155,7 @@ async def inference_attach_file(request):
 
         # 모델에 요청 보내기
         response_q = asyncio.Queue()
+        print(len(content))
         await request.app.model_queue.put((response_q, [question for _ in range(len(content))], content, top_k))
 
         # 예측 결과값 수령
@@ -195,6 +196,7 @@ async def server_loop(q):
         pipe = pipeline("question-answering", model=MODEL_NAME, top_k = MAX_TOP_K, device=0)
     else:
         pipe = pipeline("question-answering", model=MODEL_NAME, top_k = MAX_TOP_K)
+    
     while True:
         (response_q, question, context, top_k) = await q.get()
         try:
