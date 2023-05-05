@@ -3,24 +3,23 @@ from starlette.applications import Starlette
 from starlette.responses import JSONResponse
 from starlette.exceptions import HTTPException
 from starlette.requests import Request
-from modules.mrc_service.search_api import title_and_context
+from modules.mrc_service.search_functions import title_and_context, eliminate_final_postposition
 from transformers import pipeline
 import asyncio
+import torch
+import logging
 
 from modules.mrc_service.file_parser.parser_manager import ParserManager
-from modules.mrc_service.file_parser.pdf_parser import PDFParser
-from modules.mrc_service.file_parser.docx_parser import DocxParser
-from modules.mrc_service.file_parser.hwp_parser import HwpParser
-from modules.mrc_service.file_parser.ppt_parser import PPTXParser
-from modules.mrc_service.file_parser.text_parser import TextParser 
 
 MODEL_NAME = "Kdogs/klue-finetuned-squad_kor_v1"
 MAX_TOP_K = 10
 MAX_DOC_PAGE_SIZE = 10
 DOMAINS = ["Sports, IT, ERICA"] #TODO ENUM
-ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'docx', 'hwp', 'pptx']) # 허용된 확장자 관리
 
 app = Starlette()
+
+LOGGER = logging.getLogger()
+
 def validate_question(question: str):
     """질문 입력값을 검증한다."""
     if question == None:
@@ -92,6 +91,8 @@ async def inference(request: Request):
             output.append(answer)
     output = sorted(output, key=lambda data:data.get('score'), reverse=True)
     for answer in output[:top_k]:
+        answer['raw_answer'] = answer["answer"]
+        answer['answer'] = eliminate_final_postposition(answer['answer'])
         answer["title"] = documents["title"][answer["index"]]
         answer["content"] = documents["content"][answer["index"]]
     return JSONResponse(output[:top_k])
@@ -115,13 +116,15 @@ async def inference(request: Request):
 
     # 예측 결과값 수령
     outputs = await parse_loop_message(response_q=response_q)
-    for output in outputs:
-        output['content'] = context
+    
+    for answer in outputs:
+        answer['raw_answer'] = answer["answer"]
+        answer['answer'] = eliminate_final_postposition(answer['answer'])
+        answer['content'] = context
 
     return JSONResponse(outputs)
 
 # POST localhost:8080/inference/file + form data("question": ..., "file": [file])
-# TODO pdf_parser => parser_factory
 @app.route("/inference/file", methods=['POST'])
 async def inference_attach_file(request):
     """파일에서 질문 MRC 진행"""
@@ -139,24 +142,20 @@ async def inference_attach_file(request):
         contents = await form["file"].read()
 
         format = form['file'].filename.split('.')[-1]
+
+        # 파일 파싱하여 본문 추출
+        pm = ParserManager()
+        pm.setup()
         try:
-            if format == 'txt':
-                content = ParserManager(Parser=TextParser()).execute(contents)
-            elif format == 'pdf':
-                content = ParserManager(Parser=PDFParser()).execute(contents)
-            elif format == 'docx':
-                content = ParserManager(Parser=DocxParser()).execute(contents)
-            elif format == 'hwp':
-                content = ParserManager(Parser=HwpParser()).execute(contents)
-            elif format == 'pptx':
-                content = ParserManager(Parser=PPTXParser()).execute(contents, 5)
-            else:
-                raise HTTPException(status_code=400, detail="허용되지 않은 확장자입니다.")
+            content = pm.execute(contents, format)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="지원하지 않는 확장자입니다.")
         except:
             raise HTTPException(status_code=400, detail="이상한 파일: 서버 관리자에게 요청하세요.")
 
         # 모델에 요청 보내기
         response_q = asyncio.Queue()
+        print(len(content))
         await request.app.model_queue.put((response_q, [question for _ in range(len(content))], content, top_k))
 
         # 예측 결과값 수령
@@ -171,6 +170,8 @@ async def inference_attach_file(request):
         output = sorted(output, key=lambda data:data.get('score'), reverse=True)
 
         for answer in output[:top_k]:
+            answer['raw_answer'] = answer["answer"]
+            answer['answer'] = eliminate_final_postposition(answer['answer'])
             answer["content"] = content[answer["index"]]
             
     return JSONResponse(output[:top_k])
@@ -190,7 +191,12 @@ async def server_loop(q):
     
     간단히 무한히 돌면서 결과값을 반환한다.
     """
-    pipe = pipeline("question-answering", model=MODEL_NAME, top_k = MAX_TOP_K)
+    if torch.cuda.is_available():
+        LOGGER.debug("cuda로 실행되었습니다.")
+        pipe = pipeline("question-answering", model=MODEL_NAME, top_k = MAX_TOP_K, device=0)
+    else:
+        pipe = pipeline("question-answering", model=MODEL_NAME, top_k = MAX_TOP_K)
+    
     while True:
         (response_q, question, context, top_k) = await q.get()
         try:
