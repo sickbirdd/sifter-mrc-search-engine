@@ -1,5 +1,5 @@
 from tika import parser
-from file_parser.ab_parser import Parser
+from modules.mrc_service.file_parser.ab_parser import Parser
 
 class PDFParser(Parser):
 
