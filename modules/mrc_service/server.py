@@ -73,7 +73,6 @@ async def inference(request: Request):
     
     # 도메인 태그 불러오기
     domain = parameters.get('domain')
-    
     try:
         documents = title_and_context(question, doc_page_size)
     except:
@@ -207,7 +206,7 @@ async def server_loop(q):
         it_pipe = pipeline("question-answering", model=IT_MODEL_NAME, top_k = MAX_TOP_K, device=0)
         erica_pipe = pipeline("question-answering", model=ERICA_MODEL_NAME, top_k = MAX_TOP_K, device=0)
     else:
-        pipe = pipeline("question-answering", model=SPORTS_MODEL_NAME, top_k = MAX_TOP_K)
+        sports_pipe = pipeline("question-answering", model=SPORTS_MODEL_NAME, top_k = MAX_TOP_K)
         it_pipe = pipeline("question-answering", model=IT_MODEL_NAME, top_k = MAX_TOP_K)
         erica_pipe = pipeline("question-answering", model=ERICA_MODEL_NAME, top_k = MAX_TOP_K)
 
@@ -217,9 +216,9 @@ async def server_loop(q):
             if domain == 'SPORTS':
                 output = sports_pipe(question=question, context=context)[:top_k]
             elif domain == 'IT':
-                output = sports_pipe(question=question, context=context)[:top_k]
+                output = it_pipe(question=question, context=context)[:top_k]
             else:
-                output = sports_pipe(question=question, context=context)[:top_k]
+                output = erica_pipe(question=question, context=context)[:top_k]
         except:
             await response_q.put(False)
             continue
