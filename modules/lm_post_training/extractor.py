@@ -119,7 +119,7 @@ class Extractor:
         if condition != None:
             if condition['index'] == len(condition["branch"]):
                 if not self._is_select(context_dict_and_list, condition["path"], condition["value"]):
-                    return 0, None
+                    return 0, []
                 condition = None
             elif condition["branch"][condition['index']] == data_DOM[0]:
                 condition['index'] += 1
@@ -188,6 +188,7 @@ class Extractor:
                         in_dict = json.load(f)
 
                     for comp in condition:
+                        comp['index'] = 0
                         context_size, context_list = self._context_finder(in_dict, data_DOM, comp)
                         
                         self._data.extend(context_list)

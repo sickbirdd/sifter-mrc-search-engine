@@ -123,7 +123,7 @@ def main():
         if args.condition_branch != None:
             conditionDict = []
             for i in range(len(args.condition_branch)):
-                conditionDict.append({"branch": args.condition_branch[i].split('/'), "path": args.condition_path[i].split('/'), "value": args.condition_value[i], "index": 0})
+                conditionDict.append({"branch": args.condition_branch[i].split('/'), "path": args.condition_path[i].split('/'), "value": args.condition_value[i]})
 
         trainer = Trainer(model_name=args.model_name, 
                 device= torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu'),
