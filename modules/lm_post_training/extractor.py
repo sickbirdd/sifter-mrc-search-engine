@@ -119,7 +119,7 @@ class Extractor:
         if condition != None:
             if condition['index'] == len(condition["branch"]):
                 if not self._is_select(context_dict_and_list, condition["path"], condition["value"]):
-                    return 0, []
+                    return 0, None
                 condition = None
             elif condition["branch"][condition['index']] == data_DOM[0]:
                 condition['index'] += 1
@@ -194,7 +194,6 @@ class Extractor:
                         self._data.extend(context_list)
                         self._size = self._size + len(context_list)
                         self._context_size += context_size
-
         if self.is_dump:
             self.save_data()
 
