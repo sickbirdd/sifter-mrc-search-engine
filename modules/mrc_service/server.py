@@ -11,10 +11,13 @@ import logging
 
 from modules.mrc_service.file_parser.parser_manager import ParserManager
 
-MODEL_NAME = "Kdogs/klue-finetuned-squad_kor_v1"
+SPORTS_MODEL_NAME = "Kdogs/sports_klue_finetuned_korquad_epoch1"
+IT_MODEL_NAME = "Kdogs/sports_kcbert_finetuned_korquad"
+ERICA_MODEL_NAME = "Kdogs/klue-finetuned-squad_kor_v1"
+
 MAX_TOP_K = 10
 MAX_DOC_PAGE_SIZE = 10
-DOMAINS = ["Sports, IT, ERICA"] #TODO ENUM
+DOMAINS = ["SPORTS, IT, ERICA"] #TODO ENUM
 
 app = Starlette()
 
@@ -68,9 +71,8 @@ async def inference(request: Request):
     doc_page_size = MAX_DOC_PAGE_SIZE if doc_page_size == None else int(doc_page_size)
     validate_doc_page_size(doc_page_size)
     
-    # TODO 
-    # domain = parameters.get('domain')
-    
+    # 도메인 태그 불러오기
+    domain = parameters.get('domain')
     try:
         documents = title_and_context(question, doc_page_size)
     except:
@@ -78,7 +80,7 @@ async def inference(request: Request):
 
     # 모델에 요청 보내기
     response_q = asyncio.Queue()
-    await request.app.model_queue.put((response_q, [question for _ in range(len(documents["content"]))], documents["content"], top_k))
+    await request.app.model_queue.put((response_q, [question for _ in range(len(documents["content"]))], documents["content"], top_k, domain))
 
     # 예측 결과값 수령
     outputs = await parse_loop_message(response_q=response_q)
@@ -110,9 +112,12 @@ async def inference(request: Request):
     top_k = body.get('top_k')
     validate_top_k(top_k)
     
+    # 도메인 태그 불러오기
+    domain = body.get('domain')
+    
     # 모델에 요청 보내기
     response_q = asyncio.Queue()
-    await request.app.model_queue.put((response_q, question, context, top_k))
+    await request.app.model_queue.put((response_q, question, context, top_k, domain))
 
     # 예측 결과값 수령
     outputs = await parse_loop_message(response_q=response_q)
@@ -152,7 +157,11 @@ async def inference_attach_file(request):
             raise HTTPException(status_code=400, detail="지원하지 않는 확장자입니다.")
         except:
             raise HTTPException(status_code=400, detail="이상한 파일: 서버 관리자에게 요청하세요.")
-
+        
+        # 도메인 태그 불러오기
+        body = await request.json()
+        domain = body.get('domain')
+        
         # 모델에 요청 보내기
         response_q = asyncio.Queue()
         print(len(content))
@@ -193,14 +202,23 @@ async def server_loop(q):
     """
     if torch.cuda.is_available():
         LOGGER.debug("cuda로 실행되었습니다.")
-        pipe = pipeline("question-answering", model=MODEL_NAME, top_k = MAX_TOP_K, device=0)
+        sports_pipe = pipeline("question-answering", model=SPORTS_MODEL_NAME, top_k = MAX_TOP_K, device=0)
+        it_pipe = pipeline("question-answering", model=IT_MODEL_NAME, top_k = MAX_TOP_K, device=0)
+        erica_pipe = pipeline("question-answering", model=ERICA_MODEL_NAME, top_k = MAX_TOP_K, device=0)
     else:
-        pipe = pipeline("question-answering", model=MODEL_NAME, top_k = MAX_TOP_K)
-    
+        sports_pipe = pipeline("question-answering", model=SPORTS_MODEL_NAME, top_k = MAX_TOP_K)
+        it_pipe = pipeline("question-answering", model=IT_MODEL_NAME, top_k = MAX_TOP_K)
+        erica_pipe = pipeline("question-answering", model=ERICA_MODEL_NAME, top_k = MAX_TOP_K)
+
     while True:
-        (response_q, question, context, top_k) = await q.get()
+        (response_q, question, context, top_k, domain) = await q.get()
         try:
-            output = pipe(question=question, context=context)[:top_k]
+            if domain == 'SPORTS':
+                output = sports_pipe(question=question, context=context)[:top_k]
+            elif domain == 'IT':
+                output = it_pipe(question=question, context=context)[:top_k]
+            else:
+                output = erica_pipe(question=question, context=context)[:top_k]
         except:
             await response_q.put(False)
             continue
