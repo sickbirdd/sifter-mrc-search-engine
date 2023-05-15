@@ -159,13 +159,12 @@ async def inference_attach_file(request):
             raise HTTPException(status_code=400, detail="이상한 파일: 서버 관리자에게 요청하세요.")
         
         # 도메인 태그 불러오기
-        body = await request.json()
-        domain = body.get('domain')
+        domain = form.get('domain')
         
         # 모델에 요청 보내기
         response_q = asyncio.Queue()
         print(len(content))
-        await request.app.model_queue.put((response_q, [question for _ in range(len(content))], content, top_k))
+        await request.app.model_queue.put((response_q, [question for _ in range(len(content))], content, top_k, domain))
 
         # 예측 결과값 수령
         outputs = await parse_loop_message(response_q=response_q)
