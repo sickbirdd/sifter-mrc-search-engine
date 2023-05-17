@@ -97,6 +97,9 @@ async def inference(request: Request):
         answer['answer'] = eliminate_final_postposition(answer['answer'])
         answer["title"] = documents["title"][answer["index"]]
         answer["content"] = documents["content"][answer["index"]]
+        answer["domain"] = documents["DOCID"][answer["index"]][0:3]
+        if answer["domain"] == "HYU":
+            answer["url"] = documents["url"][answer["index"]]
     return JSONResponse(output[:top_k])
 
 @app.route("/inference", methods=['POST'])
