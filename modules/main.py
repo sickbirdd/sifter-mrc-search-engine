@@ -60,7 +60,7 @@ def main():
 
     # 데이터 셋: 모두의 말뭉치 기사 데이터 셋으로 설정되어 있습니다.
     group_post_training.add_argument('--dataset_path', type=str, default="datasets", help="데이터 셋 경로(기본값: datasets)")
-    group_post_training.add_argument('--dataset_struct', type=str, default="*/content", help="데이터 셋 구조(기본값: document/*/paragraph/#/form)")
+    group_post_training.add_argument('--dataset_struct', type=str, default="document/*/paragraph/#/form", help="데이터 셋 구조(기본값: document/*/paragraph/#/form)")
     group_post_training.add_argument('--save_pretrain_path', type=str, help="전처리 데이터셋 중간 저장 경로, 없을 시 해당 기능 사용 안함")
     group_post_training.add_argument('--split', type=int, default=0, help="문장 분리기 사용 여부(기본값: False)")
     group_post_training.add_argument('--extract-path', type=str, help="문장 추출 결과 저장 위치")
