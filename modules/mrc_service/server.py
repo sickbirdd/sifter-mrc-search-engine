@@ -11,9 +11,9 @@ import logging
 
 from modules.mrc_service.file_parser.parser_manager import ParserManager
 
-SPORTS_MODEL_NAME = "Kdogs/sports_klue_finetuned_korquad_epoch1"
-IT_MODEL_NAME = "Kdogs/sports_kcbert_finetuned_korquad"
-ERICA_MODEL_NAME = "Kdogs/klue-finetuned-squad_kor_v1"
+SPORTS_MODEL_NAME = "Kdogs/Capstone_SPORTS_BERT"
+IT_MODEL_NAME = "Kdogs/Capstone_IT_BERT"
+ERICA_MODEL_NAME = "Kdogs/Capstone_ERICA_BERT"
 
 MAX_TOP_K = 10
 MAX_DOC_PAGE_SIZE = 10
