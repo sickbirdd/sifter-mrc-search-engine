@@ -109,15 +109,17 @@ def search_api(question: str, doc_page_size):
                 "size": doc_page_size
             }
         }
+        }
     }
-}
     return requests.post("http://***REMOVED***:7000/search", data=json.dumps(QUERY))
 
 def title_and_context(question: str, doc_page_size)->dict:
     print(question)
     search_documents = search_api(question, doc_page_size).json()["sample"]["document"]
-    data = {"title":[], "content":[]}
+    data = {"DOCID": [], "title":[], "content":[], "url": []}
     for document in search_documents:
+        data["DOCID"].append(document["fields"]["DOCID"])
         data["title"].append(document["fields"]["title"])
         data["content"].append(document["fields"]["content"])
+        data["url"].append(document["fields"]["url"])
     return data

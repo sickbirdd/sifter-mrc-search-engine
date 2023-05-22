@@ -11,9 +11,9 @@ import logging
 
 from modules.mrc_service.file_parser.parser_manager import ParserManager
 
-SPORTS_MODEL_NAME = "Kdogs/sports_klue_finetuned_korquad_epoch1"
-IT_MODEL_NAME = "Kdogs/sports_kcbert_finetuned_korquad"
-ERICA_MODEL_NAME = "Kdogs/klue-finetuned-squad_kor_v1"
+SPORTS_MODEL_NAME = "Kdogs/Capstone_SPORTS_BERT"
+IT_MODEL_NAME = "Kdogs/Capstone_IT_BERT"
+ERICA_MODEL_NAME = "Kdogs/Capstone_ERICA_BERT"
 
 MAX_TOP_K = 10
 MAX_DOC_PAGE_SIZE = 10
@@ -97,6 +97,9 @@ async def inference(request: Request):
         answer['answer'] = eliminate_final_postposition(answer['answer'])
         answer["title"] = documents["title"][answer["index"]]
         answer["content"] = documents["content"][answer["index"]]
+        answer["domain"] = documents["DOCID"][answer["index"]][0:3]
+        if answer["domain"] == "HYU":
+            answer["url"] = documents["url"][answer["index"]]
     return JSONResponse(output[:top_k])
 
 @app.route("/inference", methods=['POST'])

@@ -186,14 +186,22 @@ class Extractor:
                     file_path = os.path.join(root, file)
                     with open(file_path, 'rb') as f:
                         in_dict = json.load(f)
-
-                    for comp in condition:
-                        comp['index'] = 0
-                        context_size, context_list = self._context_finder(in_dict, data_DOM, comp)
-                        
+                    
+                    if condition != None:
+                        for comp in condition:
+                            comp['index'] = 0
+                            context_size, context_list = self._context_finder(in_dict, data_DOM, comp)
+                            
+                            self._data.extend(context_list)
+                            self._size = self._size + len(context_list)
+                            self._context_size += context_size
+                    else:
+                        context_size, context_list = self._context_finder(in_dict, data_DOM)
+                            
                         self._data.extend(context_list)
                         self._size = self._size + len(context_list)
                         self._context_size += context_size
+
         if self.is_dump:
             self.save_data()
 

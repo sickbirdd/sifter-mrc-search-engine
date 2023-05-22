@@ -59,7 +59,7 @@ def main():
     group_post_training.add_argument('--mask_prob', type=float, default=0.15, help="마스킹 확률(문장 변경 확률 - 그중 0.8 마스킹 0.1 다른 문장 0.1 변경 X) (기본값: 0.15)")
 
     # 데이터 셋: 모두의 말뭉치 기사 데이터 셋으로 설정되어 있습니다.
-    group_post_training.add_argument('--dataset_path', type=str, default="datasets", help="데이터 셋 경로(기본값: datasets/lm_post_training/training/모두의말뭉치)")
+    group_post_training.add_argument('--dataset_path', type=str, default="datasets", help="데이터 셋 경로(기본값: datasets)")
     group_post_training.add_argument('--dataset_struct', type=str, default="document/*/paragraph/#/form", help="데이터 셋 구조(기본값: document/*/paragraph/#/form)")
     group_post_training.add_argument('--save_pretrain_path', type=str, help="전처리 데이터셋 중간 저장 경로, 없을 시 해당 기능 사용 안함")
     group_post_training.add_argument('--split', type=int, default=0, help="문장 분리기 사용 여부(기본값: False)")
