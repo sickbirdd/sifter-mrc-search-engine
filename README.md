@@ -6,15 +6,70 @@
 </p>
 </p>
 
-
----
-
-**문서**: 문서화 페이지 넣으면 됩니다. (TODO)
-
----
-
 # mrc-search-engine
 mrc-search-engine은 검색 엔진과 함께 사용되는 기계독해(Machine Reading Comprehension) 모듈을 개발하는 프로젝트입니다.
+
+---
+## 서비스 모듈 실행 가이드
+## Nvidia-docker 사용
+### 저장소 및 GPG키 설정
+```
+distribution=$(. /etc/os-release;echo $ID$VERSION_ID) \
+   && curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add - \
+   && curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
+```
+### Install Nvidia-docker
+```
+sudo apt-get update
+sudo apt-get install -y nvidia-docker2
+```
+### docker 서비스 재시작
+```
+sudo systemctl restart docker
+```
+
+---
+## Docker image 불러오기
+```
+docker load -i mrc.tar
+```
+## Docker image 실행하기 (gpu 사용)
+```
+docker run -it --gpus all -p [PORT NUMBER]:8000 mrc
+```
+
+---
+
+## 직접 구축
+JDK 설치 (1.7 버전 이후) 및 JAVA_HOME 환경 변수 설정
+```
+apt-get install openjdk-17-jdk
+```
+Mecab 설치
+```
+wget https://bitbucket.org/eunjeon/mecab-ko/downloads/mecab-0.996-ko-0.9.2.tar.gz && \
+    tar xvfz mecab-0.996-ko-0.9.2.tar.gz && \
+    cd mecab-0.996-ko-0.9.2 && \
+    ./configure && \
+    make && \
+    make check && \
+    make install && \
+    ldconfig
+```
+Mecab-dictionary 설치
+```
+wget https://bitbucket.org/eunjeon/mecab-ko-dic/downloads/mecab-ko-dic-2.1.1-20180720.tar.gz && \
+    tar xvfz mecab-ko-dic-2.1.1-20180720.tar.gz && \
+    cd mecab-ko-dic-2.1.1-20180720 && \
+    ./configure && \
+    make && \
+    make install
+```
+파이썬 라이브러리 설치
+```
+pip install -r modules/mrc_service/requirements.txt
+```
+---
 
 ## 개발 환경 설정 가이드
 

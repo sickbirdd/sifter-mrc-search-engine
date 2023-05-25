@@ -3,13 +3,13 @@ from starlette.applications import Starlette
 from starlette.responses import JSONResponse
 from starlette.exceptions import HTTPException
 from starlette.requests import Request
-from modules.mrc_service.search_functions import title_and_context, eliminate_final_postposition
+from search_functions import title_and_context, eliminate_final_postposition
 from transformers import pipeline
 import asyncio
 import torch
 import logging
 
-from modules.mrc_service.file_parser.parser_manager import ParserManager
+from file_parser.parser_manager import ParserManager
 
 SPORTS_MODEL_NAME = "Kdogs/Capstone_SPORTS_BERT"
 IT_MODEL_NAME = "Kdogs/Capstone_IT_BERT"
