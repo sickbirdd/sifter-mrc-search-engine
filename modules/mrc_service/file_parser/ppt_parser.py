@@ -1,7 +1,9 @@
-from file_parser.ab_parser import Parser
+from modules.mrc_service.file_parser.parser_interface import Parser
 from pptx import Presentation
 from io import BytesIO
+from modules.mrc_service.file_parser.utils import singleton
 
+@singleton
 class PPTXParser(Parser):
 
     def parser_buffer(self, buffer):
@@ -15,7 +17,7 @@ class PPTXParser(Parser):
                     result.append(paragraph.text)
         return result
     
-    def parse(self, buffer, length, cond_split="\n\n\n") -> list:
+    def parse(self, buffer, length = 5, cond_split="\n\n\n") -> list:
         content = self.parser_buffer(buffer)
         print(content)
         paragragh_list = [paragragh for paragragh in content if len(paragragh) > length]

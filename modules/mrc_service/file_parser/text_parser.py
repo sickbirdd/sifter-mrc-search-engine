@@ -1,5 +1,7 @@
-from file_parser.ab_parser import Parser
+from modules.mrc_service.file_parser.parser_interface import Parser
+from modules.mrc_service.file_parser.utils import singleton
 
+@singleton
 class TextParser(Parser):
 
     def parser_buffer(self, buffer):

@@ -1,3 +1,18 @@
+<p align="center">
+  <a href="https://www.google.com/search?q=%EB%A7%8C%EB%93%A0+%EA%B2%80%EC%83%89+%EC%82%AC%EC%9D%B4%ED%8A%B8+%EB%84%A3%EC%9C%BC%EB%A9%B4+%EB%90%A9%EB%8B%88%EB%8B%A4.&ei=-AQHZP2aE8yp2roPlaiMkAc&ved=0ahUKEwj99tfcwcn9AhXMlFYBHRUUA3IQ4dUDCA8&uact=5&oq=%EB%A7%8C%EB%93%A0+%EA%B2%80%EC%83%89+%EC%82%AC%EC%9D%B4%ED%8A%B8+%EB%84%A3%EC%9C%BC%EB%A9%B4+%EB%90%A9%EB%8B%88%EB%8B%A4.&gs_lcp=Cgxnd3Mtd2l6LXNlcnAQAzIFCAAQogQyBQgAEKIEOgoIABBHENYEELADOgoIIRCgARDDBBAKOggIIRCgARDDBEoECEEYAFDeAlj6H2DWLGgLcAF4BYABnwGIAd4UkgEEMS4xOZgBAKABAcgBCsABAQ&sclient=gws-wiz-serp"><img width="420px" src="resources/shifter.png"></a>
+</p>
+<p align="center">
+    <em>✨ MRC training modules : post-train & fine-tune ✨</em>
+</p>
+</p>
+
+
+---
+
+**문서**: 문서화 페이지 넣으면 됩니다. (TODO)
+
+---
+
 # mrc-search-engine
 mrc-search-engine은 검색 엔진과 함께 사용되는 기계독해(Machine Reading Comprehension) 모듈을 개발하는 프로젝트입니다.
 
@@ -29,86 +44,20 @@ requirements.txt 생성
 pip list --format=freeze > requirements.txt
 ```
 
-<p align="center">
-  [적당히 멋진 사진]
-  <!-- <a href="?"><img width="420px" src="?" alt='?'></a> -->
-</p>
-<p align="center">
-    <em>✨ MRC Inference Api Server ✨</em>
-</p>
-</p>
-
----
-
-**문서**: 없음
-
----
-
-# Inference Api
-
-MRC 모델의 핵심적인 사용 기능입니다.
-
-문장과 원하는 질문을 보내면 인공지능 모델을 사용하여 문장에서 해답을 찾아서 반환해 줍니다.
-
-## 요구사항
-
-Python
-Starlette
-trainsformer
-
-## 시작
-
-uvicorn server:app
-
-## Inference 예제
-
-**GET [Server Address]/inferece**:
-
-```shell
-GET http://localhost:8000/inference?question="What is a good example of a question answering dataset?"&context="Extractive Question Answering is the task of extracting an answer from a text given a question. An example of aquestion answering dataset is the SQuAD dataset, which is entirely based on that task. If you would like to fine-tune a model on a SQuAD task, you may leverage the examples/pytorch/question-answering/run_squad.py script."
+## 어떻게 시작하나요?
+```
+cd modules
+python.exe -m main.py post-training
 ```
 
-```shell
-[
-    {
-        "score": 0.9686582088470459,
-        "start": 146,
-        "end": 159,
-        "answer": "SQuAD dataset"
-    },
-    {
-        "score": 0.011825370602309704,
-        "start": 146,
-        "end": 151,
-        "answer": "SQuAD"
-    },
-    {
-        "score": 0.00457766791805625,
-        "start": 142,
-        "end": 159,
-        "answer": "the SQuAD dataset"
-    },
-    {
-        "score": 0.003165960079059005,
-        "start": 152,
-        "end": 159,
-        "answer": "dataset"
-    }
-]
+훈련 과정상의 변경점을 주고 싶다면 다양한 인자를 추가할 수 있습니다.
+다음 명령어를 통해서 이를 확인해 보세요.
+```
+python.exe -m main.py --help
 ```
 
-parameters
 ---
 
-* question(**필수**) :  질문
-* context(**필수**) : 문장
-* top_k : 원하는 정보 개수
-* domain : 사용할 도메인 
-
-response
----
-
-* score : 예측 점수
-* start : 예측값 시작 위치
-* end : 예측값 종료 위치
-* answer : 답변
+## 서비스 모듈
+해당 프로젝트는 훈련한 모델을 사용할 수 있는 api server를 동시에 제공합니다.
+Service program 관련 사항은 [서비스 모듈](modules/mrc_service/README.md)를 참조합니다.
