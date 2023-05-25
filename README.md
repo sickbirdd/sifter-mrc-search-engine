@@ -11,7 +11,7 @@ mrc-search-engine은 검색 엔진과 함께 사용되는 기계독해(Machine R
 
 ---
 ## 서비스 모듈 실행 가이드
-## Nvidia-docker 사용
+## Nvidia-docker 설치
 ### 저장소 및 GPG키 설정
 ```
 distribution=$(. /etc/os-release;echo $ID$VERSION_ID) \
