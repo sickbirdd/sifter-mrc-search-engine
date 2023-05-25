@@ -40,12 +40,12 @@ docker load -i mrc.tar
 ```
 ## Docker image 실행하기 (gpu 사용)
 ```
-docker run -it --gpus all -p [PORT NUMBER]:8000 mrc
+docker run -it --gpus all -p 8000:8000 mrc
 ```
 
 ---
 
-## 직접 구축 (Ubuntu 배포판 기준)
+## Docker를 사용하지 않고 구축 (Ubuntu 배포판 기준)
 JDK 설치 (1.7 버전 이후) 및 JAVA_HOME 환경 변수 설정
 ```
 apt-get install openjdk-17-jdk
