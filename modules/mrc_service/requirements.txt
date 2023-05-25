@@ -33,7 +33,6 @@ konlpy==0.6.0
 kss==4.5.1
 lxml==4.9.2
 MarkupSafe==2.1.2
-mecab-python==0.996-ko-0.9.2
 multidict==6.0.2
 multiprocess==0.70.13
 networkx==3.0
@@ -57,6 +56,7 @@ pydantic==1.10.5
 Pygments==2.14.0
 pyparsing==3.0.9
 pytest==7.2.1
+mecab
 python-dateutil==2.8.2
 python-mecab-kor==1.2.6
 python-multipart==0.0.5

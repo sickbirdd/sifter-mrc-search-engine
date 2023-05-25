@@ -1,5 +1,5 @@
-from modules.mrc_service.file_parser.parser_interface import Parser
-from modules.mrc_service.file_parser.utils import singleton
+from file_parser.parser_interface import Parser
+from file_parser.utils import singleton
 
 from pdfminer.pdfpage import PDFPage
 from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
