@@ -34,6 +34,7 @@ sudo systemctl restart docker
 
 ---
 ## Docker image 불러오기
+- https://drive.google.com/file/d/14_IsFGQFzjRMhFAmUYCibwDx4JuOb4BB/view?usp=sharing
 ```
 docker load -i mrc.tar
 ```
