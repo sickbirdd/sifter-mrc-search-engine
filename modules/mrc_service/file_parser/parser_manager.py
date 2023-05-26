@@ -1,16 +1,16 @@
-from modules.mrc_service.file_parser.parser_interface import Parser
+from file_parser.parser_interface import Parser
 import logging
 
-from modules.mrc_service.file_parser.pdf_parser import PDFParser
-from modules.mrc_service.file_parser.docx_parser import DocxParser
-from modules.mrc_service.file_parser.hwp_parser import HwpParser
-from modules.mrc_service.file_parser.ppt_parser import PPTXParser
-from modules.mrc_service.file_parser.text_parser import TextParser 
+from file_parser.pdf_parser import PDFParser
+from file_parser.docx_parser import DocxParser
+from file_parser.hwp_parser import HwpParser
+from file_parser.ppt_parser import PPTXParser
+from file_parser.text_parser import TextParser 
 
 LOGGER = logging.getLogger()
 logging.basicConfig(level=logging.DEBUG, format='%(message)s')
 
-from modules.mrc_service.file_parser.utils import StrEnum
+from file_parser.utils import StrEnum
 from enum import auto
     
 class FileType(StrEnum):
