@@ -111,7 +111,7 @@ def search_api(question: str, doc_page_size):
         }
         }
     }
-    return requests.post("http://***REMOVED***:7000/search", data=json.dumps(QUERY))
+    return requests.post("IP주소", data=json.dumps(QUERY))
 
 def title_and_context(question: str, doc_page_size)->dict:
     print(question)
