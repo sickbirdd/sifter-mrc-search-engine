@@ -7,8 +7,9 @@
 </p>
 
 # mrc-search-engine
-mrc-search-engine은 검색 엔진과 함께 사용되는 기계독해(Machine Reading Comprehension) 모듈을 개발하는 프로젝트입니다.
-
+mrc-search-engine은 검색 엔진과 함께 사용되는 기계독해(Machine Reading Comprehension) 모듈을 개발하는 프로젝트입니다.  
+* [개발 과정](https://sickbirdd.notion.site/sickbirdd/80659d25c10749b5ac4f51c447b23836)  
+* [웹 서비스](https://github.com/sickbirdd/sifter-web-service)
 ---
 ## 서비스 모듈 실행 가이드
 ## Docker 설치
